@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bufio"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -13,6 +14,10 @@ var (
 	persistentLogMu      sync.Mutex
 	persistentLogEnabled bool
 	persistentLogDays    = 7
+	persistentLogFile    *os.File
+	persistentLogBuf     *bufio.Writer
+	persistentLogPath    string
+	persistentLogFlushT  *time.Timer
 	secretLogPattern     = regexp.MustCompile(`(?i)(accessToken|refreshToken|clientSecret|device_code|user_code|regCode|workflowState|code|验证码)(\s*[:=]\s*)([^\s,}]+)`)
 )
 
@@ -21,6 +26,9 @@ func ConfigurePersistentLogs(enabled bool, retentionDays int) {
 	persistentLogMu.Lock()
 	defer persistentLogMu.Unlock()
 	persistentLogEnabled = enabled
+	if !enabled {
+		closePersistentLogLocked()
+	}
 	if retentionDays >= 1 && retentionDays <= 90 {
 		persistentLogDays = retentionDays
 	}
@@ -34,15 +42,64 @@ func AppendPersistentLog(message string) {
 	if !persistentLogEnabled {
 		return
 	}
-	_ = os.MkdirAll(GetLogsDir(), 0o755)
 	path := filepath.Join(GetLogsDir(), time.Now().Format("2006-01-02")+".log")
-	redacted := secretLogPattern.ReplaceAllString(message, "$1$2<redacted>")
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
-	if err != nil {
-		return
+	if persistentLogFile == nil || persistentLogPath != path {
+		closePersistentLogLocked()
+		_ = os.MkdirAll(GetLogsDir(), 0o755)
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
+		if err != nil {
+			return
+		}
+		persistentLogFile = file
+		persistentLogBuf = bufio.NewWriterSize(file, 32*1024)
+		persistentLogPath = path
 	}
-	_, _ = file.WriteString(redacted)
-	_ = file.Close()
+	redacted := secretLogPattern.ReplaceAllString(message, "$1$2<redacted>")
+	_, _ = persistentLogBuf.WriteString(redacted)
+	// 缓冲写入，1 秒内合并落盘
+	if persistentLogFlushT == nil {
+		persistentLogFlushT = time.AfterFunc(time.Second, func() {
+			persistentLogMu.Lock()
+			defer persistentLogMu.Unlock()
+			persistentLogFlushT = nil
+			if persistentLogBuf != nil {
+				_ = persistentLogBuf.Flush()
+			}
+		})
+	}
+}
+
+// closePersistentLogLocked 刷新并关闭当前日志文件句柄 (需持有 persistentLogMu)
+func closePersistentLogLocked() {
+	if persistentLogFlushT != nil {
+		persistentLogFlushT.Stop()
+		persistentLogFlushT = nil
+	}
+	if persistentLogBuf != nil {
+		_ = persistentLogBuf.Flush()
+		persistentLogBuf = nil
+	}
+	if persistentLogFile != nil {
+		_ = persistentLogFile.Close()
+		persistentLogFile = nil
+	}
+	persistentLogPath = ""
+}
+
+// FlushPersistentLog 立即将缓冲日志写入磁盘
+func FlushPersistentLog() {
+	persistentLogMu.Lock()
+	defer persistentLogMu.Unlock()
+	if persistentLogBuf != nil {
+		_ = persistentLogBuf.Flush()
+	}
+}
+
+// ClosePersistentLog 刷新并关闭日志文件 (应用退出时调用)
+func ClosePersistentLog() {
+	persistentLogMu.Lock()
+	defer persistentLogMu.Unlock()
+	closePersistentLogLocked()
 }
 
 func pruneLogsLocked(now time.Time) {
@@ -66,6 +123,7 @@ func pruneLogsLocked(now time.Time) {
 func ClearLogs() error {
 	persistentLogMu.Lock()
 	defer persistentLogMu.Unlock()
+	closePersistentLogLocked()
 	entries, err := os.ReadDir(GetLogsDir())
 	if err != nil {
 		return err

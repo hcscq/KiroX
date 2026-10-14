@@ -1027,7 +1027,7 @@ function openGoogleManageModal(email, initialTab) {
   if (inputPwd) inputPwd.value = acc.password || '';
 
   var inputRec = document.getElementById('manage-input-recovery');
-  if (inputRec) inputRec.value = acc.recoveryEmail || '';
+  if (inputRec) inputRec.value = acc.recovery || acc.recoveryEmail || '';
 
   var inputProxy = document.getElementById('manage-input-proxy');
   if (inputProxy) inputProxy.value = acc.proxy || '';
@@ -1176,6 +1176,10 @@ async function saveGoogle2FAManual() {
   if (!_currentManageEmail) return;
   var inputTotp = document.getElementById('manage-input-totp');
   var newSecret = inputTotp ? inputTotp.value.trim().replace(/\s+/g, '') : '';
+  if (!newSecret) {
+    showToast('2FA 密钥不能为空（留空保存会误改其他字段）', 'warning');
+    return;
+  }
 
   if (newSecret) {
     var res = await window.go.main.App.VerifyTOTPSecret(newSecret);
@@ -1367,7 +1371,7 @@ function exportUpdatedGoogleAccounts() {
   var lines = [];
   for (var i = 0; i < _googleAccounts.length; i++) {
     var a = _googleAccounts[i];
-    var line = (a.email || '') + '----' + (a.password || '') + '----' + (a.recoveryEmail || '') + '----' + (a.totpSecret || '');
+    var line = (a.email || '') + '----' + (a.password || '') + '----' + (a.recovery || a.recoveryEmail || '') + '----' + (a.totpSecret || '');
     if (a.proxy) {
       line += '----' + a.proxy;
     }
@@ -1554,19 +1558,12 @@ async function exportGoogleKiroCredentialsBatch() {
       return;
     }
 
-    var blob = new Blob([res.json], { type: 'application/json;charset=utf-8' });
-    var url = URL.createObjectURL(blob);
-    var link = document.createElement('a');
-    link.href = url;
-    var now = new Date();
-    var ts = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + '_' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
-    var filename = 'kiro_accounts_kam_' + ts + '.json';
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showToast('成功导出 ' + res.count + ' 个账号的 Kiro 凭据 (文件: ' + filename + ')', 'success');
+    if (res.cancelled) {
+      showToast('已取消导出', 'warning');
+      return;
+    }
+    // 后端已通过原生保存对话框写入磁盘，前端不再二次下载
+    showToast('成功导出 ' + res.count + ' 个账号的 Kiro 凭据 (文件: ' + (res.path || '') + ')', 'success');
   } catch (e) {
     showToast('批量导出失败: ' + e.message, 'error');
   }

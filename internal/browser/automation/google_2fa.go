@@ -66,14 +66,15 @@ func AutomateChangeGoogle2FAWithLayout(acc storage.GoogleAccount, cb ProgressCal
 
 	if proxyAddr != "" {
 		report(fmt.Sprintf("正在挂载独立代理: %s", proxyAddr))
-		opts = append(opts, chromedp.ProxyServer(proxyAddr))
+		opts = append(opts, chromedp.ProxyServer(chromeProxyServer(proxyAddr)))
 	}
 
-	allocCtx, cancelAlloc := chromedp.NewExecAllocator(context.Background(), opts...)
+	allocCtx, cancelAlloc := chromedp.NewExecAllocator(automationContext(), opts...)
 	defer cancelAlloc()
 
 	ctx, cancelCtx := chromedp.NewContext(allocCtx)
 	defer cancelCtx()
+	enableProxyAuth(ctx, proxyAddr)
 
 	// 设定总超时 4 分钟 (留足网络握手与身份核验时间)
 	ctx, cancelTimeout := context.WithTimeout(ctx, 4*time.Minute)

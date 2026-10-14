@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
+	"os"
+	"sort"
 	"strings"
 	"sync/atomic"
 
@@ -18,8 +20,24 @@ import (
 
 var requestTimeoutSeconds atomic.Int64
 
+// insecureSkipVerify 是否跳过 TLS 证书校验。默认关闭 (校验证书)，
+// 仅在用户显式开启 (设置项 insecureSkipTLSVerify 或环境变量 KIROX_INSECURE_TLS=1) 时启用，
+// 适用于抓包调试或会做 TLS 中间人的代理。
+var insecureSkipVerify atomic.Bool
+
 func init() {
 	requestTimeoutSeconds.Store(60)
+	if v := strings.TrimSpace(os.Getenv("KIROX_INSECURE_TLS")); v == "1" || strings.EqualFold(v, "true") {
+		insecureSkipVerify.Store(true)
+	}
+}
+
+// SetInsecureSkipVerify 设置新建 TLS 客户端是否跳过证书校验 (环境变量开启时始终为 true)
+func SetInsecureSkipVerify(enabled bool) {
+	if v := strings.TrimSpace(os.Getenv("KIROX_INSECURE_TLS")); v == "1" || strings.EqualFold(v, "true") {
+		enabled = true
+	}
+	insecureSkipVerify.Store(enabled)
 }
 
 // SetRequestTimeoutSeconds changes the timeout used by newly created TLS clients.
@@ -98,8 +116,10 @@ func NewTLSClient(proxy string, followRedirect bool, chromeVer ...string) tls_cl
 	opts := []tls_client.HttpClientOption{
 		tls_client.WithTimeoutSeconds(int(requestTimeoutSeconds.Load())),
 		tls_client.WithClientProfile(tlsProfileForChrome(chromeVer...)),
-		tls_client.WithInsecureSkipVerify(),
 		tls_client.WithCookieJar(jar),
+	}
+	if insecureSkipVerify.Load() {
+		opts = append(opts, tls_client.WithInsecureSkipVerify())
 	}
 	if !followRedirect {
 		opts = append(opts, tls_client.WithNotFollowRedirects())
@@ -188,12 +208,41 @@ func GetNestedStringMap(data map[string]interface{}, key string) map[string]stri
 }
 
 // SetHeaders 设置请求头 (保持顺序)
+// chromeHeaderOrder 近似 Chrome 实际发送的请求头顺序；未列出的头按字母序追加，保证每次顺序一致。
+var chromeHeaderOrder = []string{
+	"host", "content-length", "cache-control", "sec-ch-ua", "sec-ch-ua-mobile", "sec-ch-ua-platform",
+	"upgrade-insecure-requests", "user-agent", "content-type", "accept", "origin",
+	"sec-fetch-site", "sec-fetch-mode", "sec-fetch-user", "sec-fetch-dest", "referer",
+	"accept-encoding", "accept-language", "cookie", "priority",
+}
+
+var chromeHeaderRank = func() map[string]int {
+	m := make(map[string]int, len(chromeHeaderOrder))
+	for i, h := range chromeHeaderOrder {
+		m[h] = i
+	}
+	return m
+}()
+
+// SetHeaders 设置请求头 (按确定性的 Chrome 风格顺序，避免 map 遍历导致顺序随机)
 func SetHeaders(req *fhttp.Request, headers map[string]string) {
-	var order []string
+	order := make([]string, 0, len(headers))
 	for k, v := range headers {
 		req.Header.Set(k, v)
 		order = append(order, strings.ToLower(k))
 	}
+	sort.SliceStable(order, func(i, j int) bool {
+		ri, okI := chromeHeaderRank[order[i]]
+		rj, okJ := chromeHeaderRank[order[j]]
+		switch {
+		case okI && okJ:
+			return ri < rj
+		case okI != okJ:
+			return okI
+		default:
+			return order[i] < order[j]
+		}
+	})
 	req.Header[fhttp.HeaderOrderKey] = order
 }
 

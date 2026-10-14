@@ -253,6 +253,8 @@ func TestPersistentLogsRedactCredentials(t *testing.T) {
 	})
 
 	AppendPersistentLog("验证码: 123456 accessToken=secret-token\n")
+	FlushPersistentLog()
+	t.Cleanup(ClosePersistentLog)
 	data, err := os.ReadFile(filepath.Join(GetLogsDir(), time.Now().Format("2006-01-02")+".log"))
 	if err != nil {
 		t.Fatal(err)

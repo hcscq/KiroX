@@ -8,6 +8,7 @@ import (
 	"os"
 	"reg_go/internal/browser"
 	"reg_go/internal/browser/automation"
+	httputil "reg_go/internal/http"
 	"reg_go/internal/email"
 	"reg_go/internal/proxy"
 
@@ -71,6 +72,7 @@ func (a *App) GetRunningGoogleTasks() map[string]string {
 // startup 在应用启动时调用
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	automation.SetBaseContext(ctx)
 	close(a.startupDone)
 	// 重定向日志到内存
 	log.SetOutput(&logWriter{app: a})
@@ -80,6 +82,7 @@ func (a *App) startup(ctx context.Context) {
 	proxy.InitPool(storage.GetDataDir())
 	settings := storage.GetAppSettings()
 	storage.ConfigurePersistentLogs(settings.PersistentLogs, settings.LogRetentionDays)
+	httputil.SetInsecureSkipVerify(settings.InsecureSkipTLSVerify)
 
 	// 居中并显示窗口
 	go func() {
@@ -100,7 +103,9 @@ func (a *App) restoreWindow() {
 
 // shutdown 在应用关闭时调用
 func (a *App) shutdown(ctx context.Context) {
+	automation.CancelAllAutomation()
 	storage.FlushAccountsSync()
+	storage.ClosePersistentLog()
 }
 
 // OpenURL 在系统默认浏览器中打开 URL
@@ -1296,6 +1301,8 @@ func (a *App) StartTask(req task.StartTaskRequest) map[string]interface{} {
 
 // StopTask 停止注册任务
 func (a *App) StopTask() map[string]interface{} {
+	// 同时中断后台浏览器自动化 (Google 登录/改 2FA/生成订阅链接等)
+	automation.CancelAllAutomation()
 	return task.StopTask(true)
 }
 

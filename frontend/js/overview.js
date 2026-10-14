@@ -75,14 +75,6 @@ async function loadOverview() {
   }
 }
 
-// loadTaskStatus 加载实时任务状态（纯内存，1秒刷新）
-async function loadTaskStatus() {
-  if (!window.go || !window.go.main || !window.go.main.App || !window.go.main.App.GetTaskStatus) return;
-  try {
-    await window.go.main.App.GetTaskStatus();
-  } catch (e) {}
-}
-
 // updateOverviewUI 更新概览界面
 function updateOverviewUI(data) {
   var kiro = data.kiro || {};

@@ -361,6 +361,9 @@ setInterval(async function() {
       avgEl.textContent = '-';
     }
   } catch(e) {}
+  // 仅在日志面板可见时才拉取并重渲染日志，避免后台每 2 秒全量解析 500 行
+  var _logBox = document.getElementById('unified-log-box');
+  if (!_logBox || _logBox.offsetParent === null || document.hidden) return;
   try {
     var kiroLogs = await window.go.main.App.GetLogs() || [];
     window._kiroLogs = kiroLogs;

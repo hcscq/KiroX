@@ -125,15 +125,16 @@ func AutoLoginGoogleAccountWithLayout(acc storage.GoogleAccount, autoAuthorizeKi
 	)
 
 	if proxyAddr != "" {
-		opts = append(opts, chromedp.ProxyServer(proxyAddr))
+		opts = append(opts, chromedp.ProxyServer(chromeProxyServer(proxyAddr)))
 	}
 
-	allocCtx, cancelAlloc := chromedp.NewExecAllocator(context.Background(), opts...)
+	allocCtx, cancelAlloc := chromedp.NewExecAllocator(automationContext(), opts...)
 	defer cancelAlloc()
 
 	// 创建带超时的任务上下文 (含 Kiro OAuth 授权时上限 180 秒，纯 Google 登录上限 120 秒)
 	ctx, cancelCtx := chromedp.NewContext(allocCtx)
 	defer cancelCtx()
+	enableProxyAuth(ctx, proxyAddr)
 
 	timeoutDur := 120 * time.Second
 	if autoAuthorizeKiro {

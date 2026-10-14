@@ -219,6 +219,7 @@ func runBatch(batch *taskBatch, req StartTaskRequest, emailProvider string, outl
 	taskCtx := batch.ctx
 	settings := storage.GetAppSettings()
 	httputil.SetRequestTimeoutSeconds(settings.RequestTimeoutSeconds)
+	httputil.SetInsecureSkipVerify(settings.InsecureSkipTLSVerify)
 	browser.SetIdentityCacheTTLHours(settings.FingerprintTTLHours)
 	defer Manager.finishBatch(batch)
 	if taskCtx.Err() != nil {

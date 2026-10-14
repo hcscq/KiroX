@@ -67,7 +67,7 @@ func AutoFillStripeCheckout(paymentURL string, card CreditCardInfo, autoSubmit b
 		chromedp.Flag("headless", false),
 	)
 
-	allocCtx, cancelAlloc := chromedp.NewExecAllocator(context.Background(), opts...)
+	allocCtx, cancelAlloc := chromedp.NewExecAllocator(automationContext(), opts...)
 	defer cancelAlloc()
 
 	ctx, cancelCtx := chromedp.NewContext(allocCtx)

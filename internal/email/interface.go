@@ -1,6 +1,7 @@
 package email
 
 import (
+	"context"
 	"log"
 )
 
@@ -161,4 +162,9 @@ func (a *mailNestEmailAdapter) GetAddress() string {
 		return ""
 	}
 	return address
+}
+
+// ContextCodeWaiter 可选接口：支持 ctx 取消的验证码等待
+type ContextCodeWaiter interface {
+	WaitForCodeContext(ctx context.Context, timeout, interval int) (string, error)
 }

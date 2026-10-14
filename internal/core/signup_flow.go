@@ -390,7 +390,13 @@ func (r *Registrar) Step10GetOTP() (string, error) {
 		log.Printf("验证码: %s", code)
 		return code, nil
 	}
-	code, err := r.EmailSvc.WaitForCode(timeout, 3)
+	var code string
+	var err error
+	if cw, ok := r.EmailSvc.(email.ContextCodeWaiter); ok {
+		code, err = cw.WaitForCodeContext(r.context(), timeout, 3)
+	} else {
+		code, err = r.EmailSvc.WaitForCode(timeout, 3)
+	}
 	if err != nil {
 		return "", err
 	}

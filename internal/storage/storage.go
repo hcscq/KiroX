@@ -66,6 +66,7 @@ type AppSettings struct {
 	MoeMailExpiryMinutes      int    `json:"moeMailExpiryMinutes"`
 	AWSRegion                 string `json:"awsRegion"`
 	RequestTimeoutSeconds     int    `json:"requestTimeoutSeconds"`
+	InsecureSkipTLSVerify     bool   `json:"insecureSkipTLSVerify"` // 显式开启才跳过 TLS 证书校验 (抓包/MITM 代理)
 	FingerprintTTLHours       int    `json:"fingerprintTTLHours"`
 	FingerprintOffsets        []int  `json:"fingerprintOffsets"`
 	FingerprintCurvePositions []int  `json:"fingerprintCurvePositions"`
@@ -860,6 +861,7 @@ func resetAccountsCache() {
 	_flushTimer = nil
 	_accountsMu.Unlock()
 	resetGoogleAccountsCache()
+	ClosePersistentLog()
 }
 
 func loadAccountsCache() {

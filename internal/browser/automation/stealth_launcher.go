@@ -3,7 +3,6 @@ package automation
 import (
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -73,17 +72,8 @@ func BuildLaunchArgs(profileDir, proxyURL, startURL string) []string {
 
 	// 代理支持
 	if proxyURL = strings.TrimSpace(proxyURL); proxyURL != "" {
-		// 规范化代理地址给 Chrome
-		// Chrome --proxy-server 格式支持: http://host:port, socks5://host:port 等
-		if u, err := url.Parse(proxyURL); err == nil && u.Host != "" {
-			scheme := strings.ToLower(u.Scheme)
-			if scheme == "" {
-				scheme = "http"
-			}
-			args = append(args, fmt.Sprintf("--proxy-server=%s://%s", scheme, u.Host))
-		} else {
-			args = append(args, fmt.Sprintf("--proxy-server=%s", proxyURL))
-		}
+		// Chrome --proxy-server 不支持 user:pass@，统一剥离账密 (交互式窗口中由 Chrome 弹框询问账密)
+		args = append(args, "--proxy-server="+chromeProxyServer(proxyURL))
 	}
 
 	if startURL = strings.TrimSpace(startURL); startURL != "" {
@@ -164,7 +154,9 @@ func EnsureProfileUnlocked(profileDir string) {
 	if runtime.GOOS == "windows" {
 		escapedDir := strings.ReplaceAll(cleanDir, "'", "''")
 		psScript := fmt.Sprintf(`Get-CimInstance Win32_Process -Filter "name = 'chrome.exe' or name = 'msedge.exe'" | Where-Object { $_.CommandLine -and $_.CommandLine.IndexOf('%s', [System.StringComparison]::OrdinalIgnoreCase) -ge 0 } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`, escapedDir)
-		_ = exec.Command("powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", psScript).Run()
+		psCmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", psScript)
+		hideConsoleWindow(psCmd)
+		_ = psCmd.Run()
 		time.Sleep(300 * time.Millisecond)
 	}
 

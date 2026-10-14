@@ -2,6 +2,7 @@ package email
 
 import (
 	"bufio"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -209,6 +210,14 @@ func (i *ICloudProvider) GetAddress() string { return i.address }
 
 // WaitForCode polls the mailbox and fetches only messages not seen at Create time.
 func (i *ICloudProvider) WaitForCode(timeoutSec, intervalSec int) (string, error) {
+	return i.WaitForCodeContext(context.Background(), timeoutSec, intervalSec)
+}
+
+// WaitForCodeContext 支持 ctx 取消的 iCloud 验证码轮询 (StopTask 可立即中断)
+func (i *ICloudProvider) WaitForCodeContext(ctx context.Context, timeoutSec, intervalSec int) (string, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if i.listURL == "" {
 		return "", fmt.Errorf("iCloud 取件 URL 为空")
 	}
@@ -220,6 +229,9 @@ func (i *ICloudProvider) WaitForCode(timeoutSec, intervalSec int) (string, error
 	}
 	maxRetries := (timeoutSec + intervalSec - 1) / intervalSec
 	for attempt := 1; attempt <= maxRetries; attempt++ {
+		if err := ctx.Err(); err != nil {
+			return "", err
+		}
 		ids, err := i.fetchMessageIDs()
 		if err == nil {
 			for _, id := range ids {
@@ -240,7 +252,9 @@ func (i *ICloudProvider) WaitForCode(timeoutSec, intervalSec int) (string, error
 			log.Printf("[iCloud] [%d/%d] 轮询失败: %v", attempt, maxRetries, err)
 		}
 		if attempt < maxRetries {
-			time.Sleep(time.Duration(intervalSec) * time.Second)
+			if err := waitEmailPoll(ctx, time.Duration(intervalSec)*time.Second); err != nil {
+				return "", err
+			}
 		}
 	}
 	return "", fmt.Errorf("等待 iCloud 验证码超时 (%ds)", timeoutSec)

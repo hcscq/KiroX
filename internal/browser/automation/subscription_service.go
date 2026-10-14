@@ -147,14 +147,15 @@ func GenerateSubscriptionPaymentURLWithLayout(acc storage.GoogleAccount, planTyp
 	)
 
 	if proxyAddr != "" {
-		opts = append(opts, chromedp.ProxyServer(proxyAddr))
+		opts = append(opts, chromedp.ProxyServer(chromeProxyServer(proxyAddr)))
 	}
 
-	allocCtx, cancelAlloc := chromedp.NewExecAllocator(context.Background(), opts...)
+	allocCtx, cancelAlloc := chromedp.NewExecAllocator(automationContext(), opts...)
 	defer cancelAlloc()
 
 	ctx, cancelCtx := chromedp.NewContext(allocCtx)
 	defer cancelCtx()
+	enableProxyAuth(ctx, proxyAddr)
 
 	ctx, cancelTimeout := context.WithTimeout(ctx, 90*time.Second)
 	defer cancelTimeout()

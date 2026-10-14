@@ -113,14 +113,15 @@ func ExtractKiroSessionFromProfile(acc storage.GoogleAccount, cb ProgressCallbac
 		chromedp.Flag("headless", true), // 纯提取可无头执行
 	)
 	if proxyAddr != "" {
-		opts = append(opts, chromedp.ProxyServer(proxyAddr))
+		opts = append(opts, chromedp.ProxyServer(chromeProxyServer(proxyAddr)))
 	}
 
-	allocCtx, cancelAlloc := chromedp.NewExecAllocator(context.Background(), opts...)
+	allocCtx, cancelAlloc := chromedp.NewExecAllocator(automationContext(), opts...)
 	defer cancelAlloc()
 
 	ctx, cancelCtx := chromedp.NewContext(allocCtx)
 	defer cancelCtx()
+	enableProxyAuth(ctx, proxyAddr)
 
 	ctx, cancelTimeout := context.WithTimeout(ctx, 45*time.Second)
 	defer cancelTimeout()

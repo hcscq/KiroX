@@ -59,3 +59,10 @@ wailsjs/
 
 # Claude Code local session data
 .claude/
+
+
+# Local account dumps / decks (never publish)
+*账号*.txt
+*密码*.txt
+测试账号.txt
+*.pptx

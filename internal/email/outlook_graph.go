@@ -1,6 +1,7 @@
 package email
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -183,6 +184,16 @@ func findOTPGraphWithToken(accessToken string, counts OutlookMailboxCounts, code
 }
 
 func waitForOTPGraph(acc OutlookAccount, counts OutlookMailboxCounts, timeout, interval int, codeRegex *regexp.Regexp, proxyURL string) (string, error) {
+	return waitForOTPGraphContext(context.Background(), acc, counts, timeout, interval, codeRegex, proxyURL)
+}
+
+func waitForOTPGraphContext(ctx context.Context, acc OutlookAccount, counts OutlookMailboxCounts, timeout, interval int, codeRegex *regexp.Regexp, proxyURL string) (string, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	accessToken, err := refreshOutlookGraphToken(acc, proxyURL)
 	if err != nil {
 		return "", fmt.Errorf("刷新 Graph Token 失败: %v", err)
@@ -190,6 +201,9 @@ func waitForOTPGraph(acc OutlookAccount, counts OutlookMailboxCounts, timeout, i
 
 	maxRetries := timeout / interval
 	for attempt := 1; attempt <= maxRetries; attempt++ {
+		if err := ctx.Err(); err != nil {
+			return "", err
+		}
 		code, err := findOTPGraphWithToken(accessToken, counts, codeRegex, proxyURL)
 		if err != nil {
 			return "", err
@@ -198,7 +212,9 @@ func waitForOTPGraph(acc OutlookAccount, counts OutlookMailboxCounts, timeout, i
 			return code, nil
 		}
 
-		time.Sleep(time.Duration(interval) * time.Second)
+		if err := waitEmailPoll(ctx, time.Duration(interval)*time.Second); err != nil {
+			return "", err
+		}
 	}
 	return "", fmt.Errorf("等待验证码超时 (%ds)", timeout)
 }

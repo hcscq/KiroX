@@ -1,13 +1,13 @@
 module reg_go
 
-go 1.24.1
-
-toolchain go1.24.4
+go 1.26.0
 
 require (
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3
 	github.com/bogdanfinn/fhttp v0.6.8
 	github.com/bogdanfinn/tls-client v1.14.0
+	github.com/chromedp/cdproto v0.0.0-20260912003405-686a5c723acc
+	github.com/chromedp/chromedp v0.16.0
 	github.com/wailsapp/wails/v2 v2.11.0
 	golang.org/x/net v0.48.0
 )
@@ -20,7 +20,12 @@ require (
 	github.com/bogdanfinn/quic-go-utls v1.0.9-utls // indirect
 	github.com/bogdanfinn/utls v1.7.7-barnius // indirect
 	github.com/bogdanfinn/websocket v1.5.5-barnius // indirect
+	github.com/chromedp/sysutil v1.1.0 // indirect
+	github.com/go-json-experiment/json v0.0.0-20260820222146-c27c302e5fc3 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
+	github.com/gobwas/httphead v0.1.0 // indirect
+	github.com/gobwas/pool v0.2.1 // indirect
+	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
@@ -46,6 +51,6 @@ require (
 	github.com/wailsapp/go-webview2 v1.0.22 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
 	golang.org/x/crypto v0.46.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 )

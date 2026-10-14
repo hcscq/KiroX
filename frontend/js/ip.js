@@ -240,9 +240,11 @@ function renderIpRow(p) {
     + '<input type="checkbox" ' + (p.enabled ? 'checked' : '') + ' onchange="toggleIpEnabled(\'' + id + '\', this.checked)">'
     + '<span class="toggle-slider"></span></label>';
 
-  var ops = '<button type="button" class="btn btn-secondary btn-sm" onclick="testIpEntry(\'' + id + '\')">' + _ipT('ip.test', '测试') + '</button>'
-    + '<button type="button" class="btn btn-secondary btn-sm" onclick="editIpEntry(\'' + id + '\')">' + _ipT('ip.edit', '编辑') + '</button>'
-    + '<button type="button" class="btn btn-secondary btn-sm" style="color:var(--danger);" onclick="deleteIpEntry(\'' + id + '\')">' + _ipT('ip.delete', '删除') + '</button>';
+  var ops = '<div style="display:inline-flex;gap:5px;justify-content:flex-end;">'
+    + '<button type="button" class="btn btn-secondary btn-action-mini" onclick="testIpEntry(\'' + id + '\')">' + _ipT('ip.test', '测试') + '</button>'
+    + '<button type="button" class="btn btn-secondary btn-action-mini" onclick="editIpEntry(\'' + id + '\')">' + _ipT('ip.edit', '编辑') + '</button>'
+    + '<button type="button" class="btn btn-danger btn-action-mini" style="padding:0 6px;" onclick="deleteIpEntry(\'' + id + '\')">' + _ipT('ip.delete', '删除') + '</button>'
+    + '</div>';
 
   return '<tr style="border-bottom:1px solid var(--border);">'
     + '<td style="padding:8px;text-align:center;"><input type="checkbox" ' + chk + ' onclick="toggleIpSelect(\'' + id + '\',this)"></td>'

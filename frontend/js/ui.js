@@ -18,8 +18,10 @@ function showToast(msg, type) {
     ? '<svg viewBox="0 0 24 24" class="toast-icon"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>'
     : '<svg viewBox="0 0 24 24" class="toast-icon"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>';
 
-  toast.innerHTML = icon + '<span class="toast-msg">' + msg + '</span>' +
+  toast.innerHTML = icon + '<span class="toast-msg"></span>' +
     '<div class="toast-progress"><div class="toast-progress-bar"></div></div>';
+  var msgEl = toast.querySelector('.toast-msg');
+  if (msgEl) msgEl.textContent = msg == null ? '' : String(msg);
 
   container.appendChild(toast);
 
@@ -187,14 +189,16 @@ function selectEmailProvider(provider) {
   // 显示/隐藏配置块
   const moemailConfigDiv = document.getElementById('moemail-config-select');
   const cloudmailConfigDiv = document.getElementById('cloudmail-config-select');
+  const googleConfigDiv = document.getElementById('google-config-select');
 
   if (moemailConfigDiv) moemailConfigDiv.style.display = (provider === 'moemail') ? 'block' : 'none';
   if (cloudmailConfigDiv) cloudmailConfigDiv.style.display = (provider === 'cloudmail') ? 'block' : 'none';
+  if (googleConfigDiv) googleConfigDiv.style.display = (provider === 'google_oauth') ? 'block' : 'none';
 
   // 右栏（邮箱具体选项）随是否有选项动态展开/收起，模态框宽度同步延展/缩回
   const optionsCol = document.getElementById('ntm-email-options');
   const modalContent = document.getElementById('ntm-modal-content');
-  const hasRightCol = (provider === 'moemail' || provider === 'cloudmail');
+  const hasRightCol = (provider === 'moemail' || provider === 'cloudmail' || provider === 'google_oauth');
   if (optionsCol) optionsCol.classList.toggle('show', hasRightCol);
   if (modalContent) modalContent.style.maxWidth = hasRightCol ? '520px' : '420px';
 

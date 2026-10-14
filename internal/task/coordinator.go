@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"reg_go/internal/browser"
+	"reg_go/internal/browser/automation"
 	"reg_go/internal/captcha"
 	"reg_go/internal/core"
 	"reg_go/internal/data"
@@ -131,6 +132,22 @@ func startTask(req StartTaskRequest) map[string]interface{} {
 			return map[string]interface{}{
 				"error": fmt.Sprintf("可用 iCloud 账号不足: 需要 %d, 仅有 %d", req.Count, len(icloudAccounts)),
 			}
+		}
+	} else if emailProvider == "google_oauth" {
+		stored := storage.GetGoogleAccounts()
+		if len(stored) == 0 {
+			Manager.mu.Unlock()
+			return map[string]interface{}{"error": "请先在“邮箱池”添加 Google 账号"}
+		}
+		var available []storage.GoogleAccount
+		for _, acc := range stored {
+			if acc.Status != "authorized" {
+				available = append(available, acc)
+			}
+		}
+		if len(available) == 0 {
+			Manager.mu.Unlock()
+			return map[string]interface{}{"error": "所有 Google 账号均已完成 Kiro 注册与授权，无待执行账号"}
 		}
 	} else {
 		// Outlook 模式：加载账号列表
@@ -351,6 +368,28 @@ func runBatch(batch *taskBatch, req StartTaskRequest, emailProvider string, outl
 		return acc, true
 	}
 
+	// Google 账号池索引（并发安全）
+	var googlePoolIdx int
+	var googleAccounts []storage.GoogleAccount
+	if emailProvider == "google_oauth" {
+		stored := storage.GetGoogleAccounts()
+		for _, acc := range stored {
+			if acc.Status != "authorized" {
+				googleAccounts = append(googleAccounts, acc)
+			}
+		}
+	}
+	nextGoogleAccount := func() (storage.GoogleAccount, bool) {
+		accountPoolMu.Lock()
+		defer accountPoolMu.Unlock()
+		if googlePoolIdx >= len(googleAccounts) {
+			return storage.GoogleAccount{}, false
+		}
+		acc := googleAccounts[googlePoolIdx]
+		googlePoolIdx++
+		return acc, true
+	}
+
 	// MoeMail 域名池索引（并发安全）
 	var moemailDomainIdx int
 	var moemailDomainMu sync.Mutex
@@ -489,6 +528,62 @@ func runBatch(batch *taskBatch, req StartTaskRequest, emailProvider string, outl
 			taskCfg.UseICloud = true
 			taskCfg.ICloudAccount = &acc
 			currentEmail = acc.Email
+		} else if emailProvider == "google_oauth" {
+			acc, ok := nextGoogleAccount()
+			if !ok {
+				log.Printf("[Kiro][%d/%d] Google 账号池已耗尽，跳过", i+1, req.Count)
+				Manager.mu.Lock()
+				Manager.completed++
+				Manager.failed++
+				Manager.mu.Unlock()
+				return
+			}
+			currentEmail = acc.Email
+			log.Printf("[Kiro][%d/%d] 启动 Google 自动登录并全自动注册 Kiro 账号: %s", i+1, req.Count, acc.Email)
+
+			itemStart := time.Now()
+			workerIdx := i % req.Concurrency
+			err := automation.AutoLoginGoogleAccountWithLayout(acc, true, func(msg string) {
+				log.Printf("[Kiro][%d/%d][%s] %s", i+1, req.Count, acc.Email, msg)
+			}, workerIdx, req.Concurrency)
+			itemDuration := time.Since(itemStart).Seconds()
+
+			statsMu.Lock()
+			taskDurations = append(taskDurations, itemDuration)
+			statsMu.Unlock()
+
+			if err != nil {
+				log.Printf("[Kiro][%d/%d] Google/Kiro 自动化流程失败: %v", i+1, req.Count, err)
+				res := map[string]interface{}{
+					"status": "failed",
+					"email":  acc.Email,
+					"error":  fmt.Sprintf("自动化失败: %v", err),
+					"time":   itemDuration,
+				}
+				Manager.mu.Lock()
+				Manager.results = append(Manager.results, res)
+				Manager.completed++
+				Manager.failed++
+				Manager.mu.Unlock()
+
+				statsMu.Lock()
+				failOther++
+				statsMu.Unlock()
+				return
+			}
+
+			res := map[string]interface{}{
+				"status":  "success",
+				"email":   acc.Email,
+				"message": "已完成 Google 登录与 Kiro 官方 OAuth 授权注册",
+				"time":    itemDuration,
+			}
+			Manager.mu.Lock()
+			Manager.results = append(Manager.results, res)
+			Manager.completed++
+			Manager.success++
+			Manager.mu.Unlock()
+			return
 		}
 
 		log.Printf("[Kiro][%d/%d] 开始注册", i+1, req.Count)

@@ -131,7 +131,7 @@ func tlsProfileForChrome(chromeVer ...string) profiles.ClientProfile {
 
 // NewNoRedirectTLSClient 创建不跟随重定向的 TLS 客户端
 func NewNoRedirectTLSClient(proxy string, chromeVer ...string) tls_client.HttpClient {
-	return NewTLSClient(proxy, false)
+	return NewTLSClient(proxy, false, chromeVer...)
 }
 
 // ExtractParam 从 URL 中提取查询参数

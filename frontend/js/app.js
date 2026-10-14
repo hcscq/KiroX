@@ -52,6 +52,7 @@ function switchPage(pageId) {
     loadOutlookAccountsList();
     startOutlookAutoRefresh();
     if (typeof loadICloudAccountsList === 'function') loadICloudAccountsList();
+    if (typeof loadGoogleAccounts === 'function') loadGoogleAccounts();
   } else {
     stopOutlookAutoRefresh();
   }
@@ -815,6 +816,7 @@ async function loadConfig() {
   
   await loadAppSettings();
   loadOutlookAccountsList();
+  if (typeof loadGoogleAccounts === 'function') loadGoogleAccounts();
   loadDataDir();
   loadResultOutputDir();
   loadProxy();

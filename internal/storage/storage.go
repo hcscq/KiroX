@@ -33,6 +33,7 @@ var businessDataMigrations = []fileMigration{
 	{Destination: "cloudmail.json", Sources: []string{"cloudmail.json", "cloudmail.dat"}},
 	{Destination: "mailnest.json", Sources: []string{"mailnest.json", "mailnest.dat"}},
 	{Destination: "proxy_pool.json", Sources: []string{"proxy_pool.json"}},
+	{Destination: "google_accounts.json", Sources: []string{"google_accounts.json"}},
 }
 
 type settingsFile struct {
@@ -849,7 +850,6 @@ func resetAccountsCache() {
 	_accountsFlushMu.Lock()
 	defer _accountsFlushMu.Unlock()
 	_accountsMu.Lock()
-	defer _accountsMu.Unlock()
 	if _flushTimer != nil {
 		_flushTimer.Stop()
 	}
@@ -858,6 +858,8 @@ func resetAccountsCache() {
 	_accountsDirty = false
 	_accountsVersion = 0
 	_flushTimer = nil
+	_accountsMu.Unlock()
+	resetGoogleAccountsCache()
 }
 
 func loadAccountsCache() {

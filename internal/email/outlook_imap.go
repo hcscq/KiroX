@@ -2,6 +2,7 @@ package email
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
@@ -201,6 +202,7 @@ func (c *imapClient) sendCommand(cmd string) (string, error) {
 	c.tag++
 	tagStr := fmt.Sprintf("A%03d", c.tag)
 	line := fmt.Sprintf("%s %s\r\n", tagStr, cmd)
+	_ = c.conn.SetWriteDeadline(time.Now().Add(15 * time.Second))
 	_, err := c.conn.Write([]byte(line))
 	if err != nil {
 		return "", err
@@ -209,6 +211,7 @@ func (c *imapClient) sendCommand(cmd string) (string, error) {
 }
 
 func (c *imapClient) readLine() (string, error) {
+	_ = c.conn.SetReadDeadline(time.Now().Add(15 * time.Second))
 	line, err := c.reader.ReadString('\n')
 	if err != nil {
 		return "", err
@@ -468,49 +471,87 @@ func findOTPInIMAPMailbox(client *imapClient, folder imapPollFolder, codeRegex *
 
 // WaitForOTPWithMailboxCountsProxy polls messages added to Inbox and Junk after the OTP request baseline.
 func WaitForOTPWithMailboxCountsProxy(acc OutlookAccount, counts OutlookMailboxCounts, timeout, interval int, proxyURL string) (string, error) {
+	return WaitForOTPWithMailboxCountsProxyContext(context.Background(), acc, counts, timeout, interval, proxyURL)
+}
+
+// WaitForOTPWithMailboxCountsProxyContext polls messages added to Inbox and Junk with context cancellation and IMAP connection reuse.
+func WaitForOTPWithMailboxCountsProxyContext(ctx context.Context, acc OutlookAccount, counts OutlookMailboxCounts, timeout, interval int, proxyURL string) (string, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	codeRegex := regexp.MustCompile(`\b(\d{6})\b`)
 	if acc.mailMode() == "graph" {
 		log.Printf("[Outlook Graph] 等待验证码, 邮箱=%s, 发送前邮件数: 收件箱=%d, 垃圾邮件=%d", acc.Email, counts.Inbox, counts.Junk)
-		return waitForOTPGraph(acc, counts, timeout, interval, codeRegex, proxyURL)
+		return waitForOTPGraphContext(ctx, acc, counts, timeout, interval, codeRegex, proxyURL)
 	}
 
 	log.Printf("[Outlook IMAP] 等待验证码, 邮箱=%s, 发送前邮件数: 收件箱=%d, 垃圾邮件=%d", acc.Email, counts.Inbox, counts.Junk)
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	accessToken, err := RefreshOutlookTokenWithProxy(acc, proxyURL)
 	if err != nil {
 		return "", fmt.Errorf("刷新 Outlook Token 失败: %v", err)
 	}
 
+	var client *imapClient
+	var junkMailbox string
+	var junkDiscovered bool
+	defer func() {
+		if client != nil {
+			client.close()
+		}
+	}()
+
 	maxRetries := timeout / interval
 	consecutiveSelectFail := 0
 	maxConsecutiveSelectFail := 3 // 连续 3 次 SELECT 失败则提前放弃，避免单账号卡住整批
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		client, err := newIMAPClientWithProxy(proxyURL)
-		if err != nil {
-			if attempt%5 == 0 {
-				log.Printf("[Outlook IMAP] 连接失败: %v, 重试中...", err)
-			}
-			time.Sleep(time.Duration(interval) * time.Second)
-			continue
+		if err := ctx.Err(); err != nil {
+			return "", err
 		}
 
-		if err := client.authenticate(acc.Email, accessToken); err != nil {
-			client.close()
-			accessToken, _ = RefreshOutlookTokenWithProxy(acc, proxyURL)
-			time.Sleep(time.Duration(interval) * time.Second)
-			continue
+		if client == nil {
+			c, err := newIMAPClientWithProxy(proxyURL)
+			if err != nil {
+				if attempt%5 == 0 {
+					log.Printf("[Outlook IMAP] 连接失败: %v, 重试中...", err)
+				}
+				if err := waitEmailPoll(ctx, time.Duration(interval)*time.Second); err != nil {
+					return "", err
+				}
+				continue
+			}
+			if err := c.authenticate(acc.Email, accessToken); err != nil {
+				c.close()
+				accessToken, _ = RefreshOutlookTokenWithProxy(acc, proxyURL)
+				if err := waitEmailPoll(ctx, time.Duration(interval)*time.Second); err != nil {
+					return "", err
+				}
+				continue
+			}
+			client = c
+			junkDiscovered = false
 		}
 
 		folders := []imapPollFolder{{mailbox: "INBOX", label: "收件箱", before: counts.Inbox}}
 		if counts.Junk >= 0 {
-			junkMailbox, err := client.findJunkMailbox()
-			if err != nil {
-				client.close()
-				consecutiveSelectFail++
-				if consecutiveSelectFail >= maxConsecutiveSelectFail {
-					return "", fmt.Errorf("IMAP 垃圾邮件目录发现连续失败 %d 次: %v", consecutiveSelectFail, err)
+			if !junkDiscovered {
+				jm, err := client.findJunkMailbox()
+				if err != nil {
+					client.close()
+					client = nil
+					consecutiveSelectFail++
+					if consecutiveSelectFail >= maxConsecutiveSelectFail {
+						return "", fmt.Errorf("IMAP 垃圾邮件目录发现连续失败 %d 次: %v", consecutiveSelectFail, err)
+					}
+					if err := waitEmailPoll(ctx, time.Duration(interval)*time.Second); err != nil {
+						return "", err
+					}
+					continue
 				}
-				time.Sleep(time.Duration(interval) * time.Second)
-				continue
+				junkMailbox = jm
+				junkDiscovered = true
 			}
 			if junkMailbox != "" {
 				folders = append(folders, imapPollFolder{mailbox: junkMailbox, label: "垃圾邮件", before: counts.Junk})
@@ -529,19 +570,21 @@ func WaitForOTPWithMailboxCountsProxy(acc OutlookAccount, counts OutlookMailboxC
 				hadNewMessages = true
 			}
 			if code != "" {
-				client.close()
 				return code, nil
 			}
 		}
-		client.close()
 		if selectErr != nil {
+			client.close()
+			client = nil
 			consecutiveSelectFail++
 			if consecutiveSelectFail >= maxConsecutiveSelectFail {
 				log.Printf("[Outlook IMAP] 邮箱 %s 连续 %d 次 SELECT 失败，放弃等待", acc.Email, consecutiveSelectFail)
 				return "", fmt.Errorf("IMAP SELECT 连续失败 %d 次: %v", consecutiveSelectFail, selectErr)
 			}
 			log.Printf("[Outlook IMAP] SELECT 失败 (%d/%d): %v", consecutiveSelectFail, maxConsecutiveSelectFail, selectErr)
-			time.Sleep(time.Duration(interval) * time.Second)
+			if err := waitEmailPoll(ctx, time.Duration(interval)*time.Second); err != nil {
+				return "", err
+			}
 			continue
 		}
 		consecutiveSelectFail = 0
@@ -552,7 +595,9 @@ func WaitForOTPWithMailboxCountsProxy(acc OutlookAccount, counts OutlookMailboxC
 				log.Printf("[Outlook IMAP] [%d/%d] 收件箱和垃圾邮件中暂无新邮件...", attempt, maxRetries)
 			}
 		}
-		time.Sleep(time.Duration(interval) * time.Second)
+		if err := waitEmailPoll(ctx, time.Duration(interval)*time.Second); err != nil {
+			return "", err
+		}
 	}
 	return "", fmt.Errorf("等待验证码超时 (%ds)", timeout)
 }

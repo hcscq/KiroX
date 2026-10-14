@@ -383,7 +383,7 @@ func (r *Registrar) Step10GetOTP() (string, error) {
 		timeout = 120
 	}
 	if r.Cfg.UseOutlook && r.Cfg.OutlookAccount != nil {
-		code, err := email.WaitForOTPWithMailboxCountsProxy(*r.Cfg.OutlookAccount, r.OutlookMailCounts, timeout, 5, r.Cfg.EmailProxy)
+		code, err := email.WaitForOTPWithMailboxCountsProxyContext(r.context(), *r.Cfg.OutlookAccount, r.OutlookMailCounts, timeout, 5, r.Cfg.EmailProxy)
 		if err != nil {
 			return "", err
 		}

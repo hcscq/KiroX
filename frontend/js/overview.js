@@ -21,6 +21,55 @@ async function loadOverview() {
     if (typeof loadMoeMailConfigs === 'function') {
       loadMoeMailConfigs();
     }
+    // 同步 Google 账号池与有效付款链接统计
+    if (typeof window.go.main.App.GetGoogleAccounts === 'function') {
+      var googleAccs = await window.go.main.App.GetGoogleAccounts();
+      if (googleAccs) {
+        var gTotal = googleAccs.length;
+        var gAuth = 0;
+        var gReady = 0;
+        var gUninit = 0;
+        var gLinks = 0;
+        var now = Date.now();
+        for (var i = 0; i < googleAccs.length; i++) {
+          var a = googleAccs[i];
+          if (a.status === 'authorized') {
+            gAuth++;
+          } else if (a.status === 'logged_in') {
+            gReady++;
+          } else {
+            gUninit++;
+          }
+
+          if (a.paymentUrl) {
+            if (!a.paymentExpiresAt || new Date(a.paymentExpiresAt.replace(/-/g, '/')).getTime() > now) {
+              gLinks++;
+            }
+          }
+        }
+        setText('ov-google-count', gTotal);
+        setText('ov-google-auth-count', gAuth);
+        setText('ov-payment-links-count', gLinks);
+
+        // 刷新右列健康度卡片与分布条
+        setText('ov-sub-total', gTotal);
+        setText('ov-sub-auth', gAuth);
+        setText('ov-sub-ready', gReady);
+        setText('ov-sub-uninit', gUninit);
+        setText('ov-sub-links', gLinks);
+
+        var pAuth = gTotal > 0 ? Math.round((gAuth / gTotal) * 100) : 0;
+        var pReady = gTotal > 0 ? Math.round((gReady / gTotal) * 100) : 0;
+        var pUninit = gTotal > 0 ? Math.max(0, 100 - pAuth - pReady) : 0;
+
+        var barAuth = document.getElementById('ov-bar-auth');
+        if (barAuth) barAuth.style.width = pAuth + '%';
+        var barReady = document.getElementById('ov-bar-ready');
+        if (barReady) barReady.style.width = pReady + '%';
+        var barUninit = document.getElementById('ov-bar-uninit');
+        if (barUninit) barUninit.style.width = pUninit + '%';
+      }
+    }
   } catch (e) {
     console.error('加载概览数据失败:', e);
   }
@@ -56,11 +105,12 @@ function setText(id, text) {
 // 启动概览定时刷新
 function startOverviewTimer() {
   if (overviewTimer) clearInterval(overviewTimer);
-  if (taskStatusTimer) clearInterval(taskStatusTimer);
+  if (taskStatusTimer) {
+    clearInterval(taskStatusTimer);
+    taskStatusTimer = null;
+  }
   loadOverview();
-  loadTaskStatus();
   overviewTimer = setInterval(loadOverview, 3000);
-  taskStatusTimer = setInterval(loadTaskStatus, 1000);
 }
 
 // 停止概览定时刷新

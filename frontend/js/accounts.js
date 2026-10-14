@@ -95,6 +95,8 @@ function renderOutlookPage() {
   var countEl = document.getElementById('outlook-count');
 
   if (countEl) countEl.textContent = accounts ? accounts.length : 0;
+  var badgeEl = document.getElementById('tab-badge-outlook');
+  if (badgeEl) badgeEl.textContent = accounts ? accounts.length : 0;
 
   if (accounts && accounts.length > 0) {
     var total = accounts.length;
@@ -105,19 +107,22 @@ function renderOutlookPage() {
     var start = (outlookCurrentPage - 1) * outlookPageSize;
     var end = Math.min(start + outlookPageSize, total);
     var pageAccounts = accounts.slice(start, end);
-
     var html = '';
+
     pageAccounts.forEach(function(acc, i) {
       var globalIdx = start + i;
       var status = acc.registered
         ? (acc.success ? _accT('status.success', '成功') : _accT('status.failed', '失败'))
         : _accT('status.unregistered', '未注册');
-      var statusColor = acc.registered ? (acc.success ? 'var(--success)' : 'var(--danger)') : 'var(--text-muted)';
+      var statusPillClass = acc.registered
+        ? (acc.success ? 'status-pill success' : 'status-pill danger')
+        : 'status-pill default';
       var addedTime = acc.addedAt ? acc.addedAt.substring(5, 16) : '-';
-      html += '<tr><td>' + (globalIdx+1) + '</td><td>' + acc.email + '</td>';
-      html += '<td style="color:' + statusColor + ';font-weight:600;">' + status + '</td>';
-      html += '<td style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">' + addedTime + '</td>';
-      html += '<td style="text-align:right;"><a href="javascript:void(0)" onclick="deleteOutlookAccount(\'' + acc.email + '\')" style="color:var(--danger);">' + _accT('common.delete', '删除') + '</a></td></tr>';
+      html += '<tr style="border-bottom:1px solid var(--border);"><td style="padding:10px 16px;">' + (globalIdx+1) + '</td>';
+      html += '<td style="padding:10px 8px;font-family:var(--font-mono);font-size:12.5px;font-weight:500;">' + _escapeGoogleHtml(acc.email) + '</td>';
+      html += '<td style="padding:10px 8px;"><span class="' + statusPillClass + '"><span class="status-pill-dot"></span>' + status + '</span></td>';
+      html += '<td style="padding:10px 8px;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">' + addedTime + '</td>';
+      html += '<td style="padding:10px 16px;text-align:right;"><button type="button" class="btn btn-danger btn-action-mini" style="padding:0 8px;" onclick="deleteOutlookAccount(\'' + _escapeGoogleHtml(acc.email) + '\')">' + _accT('common.delete', '删除') + '</button></td></tr>';
     });
     tbody.innerHTML = html;
 
@@ -297,6 +302,8 @@ function renderICloudPage() {
   if (!tbody) return;
 
   if (countEl) countEl.textContent = accounts ? accounts.length : 0;
+  var badgeEl = document.getElementById('tab-badge-icloud');
+  if (badgeEl) badgeEl.textContent = accounts ? accounts.length : 0;
 
   if (accounts && accounts.length > 0) {
     var html = '';
@@ -304,16 +311,19 @@ function renderICloudPage() {
       var status = acc.registered
         ? (acc.success ? _accT('status.success', '成功') : _accT('status.failed', '失败'))
         : _accT('status.unregistered', '未注册');
-      var statusColor = acc.registered ? (acc.success ? 'var(--success)' : 'var(--danger)') : 'var(--text-muted)';
+      var statusPillClass = acc.registered
+        ? (acc.success ? 'status-pill success' : 'status-pill danger')
+        : 'status-pill default';
       var addedTime = acc.addedAt ? acc.addedAt.substring(5, 16) : '-';
-      html += '<tr><td>' + (i+1) + '</td><td>' + acc.email + '</td>';
-      html += '<td style="color:' + statusColor + ';font-weight:600;">' + status + '</td>';
-      html += '<td style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">' + addedTime + '</td>';
-      html += '<td style="text-align:right;"><a href="javascript:void(0)" onclick="deleteICloudAccount(\'' + acc.email + '\')" style="color:var(--danger);">' + _accT('common.delete', '删除') + '</a></td></tr>';
+      html += '<tr style="border-bottom:1px solid var(--border);"><td style="padding:10px 16px;">' + (i+1) + '</td>';
+      html += '<td style="padding:10px 8px;font-family:var(--font-mono);font-size:12.5px;font-weight:500;">' + _escapeGoogleHtml(acc.email) + '</td>';
+      html += '<td style="padding:10px 8px;"><span class="' + statusPillClass + '"><span class="status-pill-dot"></span>' + status + '</span></td>';
+      html += '<td style="padding:10px 8px;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">' + addedTime + '</td>';
+      html += '<td style="padding:10px 16px;text-align:right;"><button type="button" class="btn btn-danger btn-action-mini" style="padding:0 8px;" onclick="deleteICloudAccount(\'' + _escapeGoogleHtml(acc.email) + '\')">' + _accT('common.delete', '删除') + '</button></td></tr>';
     });
     tbody.innerHTML = html;
   } else {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">' + _accT('accounts.emptyRow', '暂无 iCloud 账号') + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:30px;">' + _accT('accounts.emptyRow', '暂无 iCloud 账号') + '</td></tr>';
   }
 }
 
@@ -357,4 +367,38 @@ function clearAllICloudAccounts() {
       }
     }
   );
+}
+
+// ===== 账号池 Segmented Tabs 切换 =====
+var currentAccountTab = 'google';
+
+function switchAccountTab(tabName) {
+  currentAccountTab = tabName || 'google';
+
+  // 1. 切换 Tab 按钮高亮
+  var tabButtons = document.querySelectorAll('.segmented-tabs .segmented-tab-btn');
+  for (var i = 0; i < tabButtons.length; i++) {
+    tabButtons[i].classList.remove('active');
+  }
+  var activeBtn = document.getElementById('tab-btn-' + tabName);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  // 2. 切换 Tab 内容区域
+  var tabContents = document.querySelectorAll('.account-tab-content');
+  for (var j = 0; j < tabContents.length; j++) {
+    tabContents[j].style.display = 'none';
+  }
+  var activePanel = document.getElementById('account-tab-content-' + tabName);
+  if (activePanel) activePanel.style.display = 'block';
+
+  // 3. 根据激活的 Tab 刷新对应数据
+  if (tabName === 'google') {
+    if (typeof loadGoogleAccounts === 'function') loadGoogleAccounts();
+  } else if (tabName === 'outlook') {
+    if (typeof loadOutlookAccountsList === 'function') loadOutlookAccountsList();
+  } else if (tabName === 'icloud') {
+    if (typeof loadICloudAccountsList === 'function') loadICloudAccountsList();
+  } else if (tabName === 'tempmail') {
+    if (typeof loadMoeMailConfigs === 'function') loadMoeMailConfigs();
+  }
 }

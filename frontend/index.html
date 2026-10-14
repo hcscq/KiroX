@@ -255,17 +255,17 @@
     <!-- ===== Page: 概览（仪表盘） ===== -->
     <div class="page active" id="page-overview">
       <div class="db-wrap">
-        <!-- ===== 统计卡片 ===== -->
-        <div class="db-stats-row" style="grid-template-columns:1fr 1fr;">
+        <!-- ===== 统计卡片 (4 列看板) ===== -->
+        <div class="db-stats-row" style="grid-template-columns:repeat(4, 1fr);gap:16px;">
           <div class="db-stat-card">
-            <img src="assets/kiro.svg" style="width:52px;height:52px;border-radius:14px;flex-shrink:0;">
+            <img src="assets/kiro.svg" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;">
             <div>
               <div class="db-stat-label" data-i18n="overview.kiroAccounts">Kiro 账号数</div>
               <div class="db-stat-value" id="ov-kiro-success">0</div>
             </div>
           </div>
           <div class="db-stat-card">
-            <svg viewBox="0 0 24 24" width="52" height="52" fill="none" style="flex-shrink:0;">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" style="flex-shrink:0;">
               <circle cx="12" cy="12" r="10" stroke="#10b981" stroke-width="2" fill="#10b98120"/>
               <path d="M8 12l2.5 2.5L16 9" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -274,53 +274,143 @@
               <div class="db-stat-value" id="ov-kiro-success-rate">0%</div>
             </div>
           </div>
-        </div>
-
-        <!-- ===== 任务控制卡片 ===== -->
-        <div class="db-detail-section">
-          <div class="db-detail-top">
-            <div class="db-detail-title">
-              <span class="db-detail-title-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3.34 19a10 10 0 1 1 17.32 0"/>
-                  <path d="m12 14 4-4"/>
-                </svg>
-              </span>
-              <span data-i18n="overview.taskControl">任务控制</span>
-            </div>
-            <div class="db-detail-actions">
-              <span class="status-dot" id="st-dot"></span>
+          <div class="db-stat-card" onclick="switchPage('accounts');switchAccountTab('google');" style="cursor:pointer;" title="点击前往 Google 账号池">
+            <img src="assets/google.svg" style="width:44px;height:44px;flex-shrink:0;padding:4px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <div>
+              <div class="db-stat-label">Google 账号</div>
+              <div style="display:flex;align-items:baseline;gap:6px;">
+                <div class="db-stat-value" id="ov-google-count">0</div>
+                <span style="font-size:11px;color:var(--text-muted);">已授权: <strong id="ov-google-auth-count" style="color:#10b981;">0</strong></span>
+              </div>
             </div>
           </div>
-          <div class="db-detail-body" style="flex-direction:column;">
-            <!-- 操作按钮 -->
-            <div style="display:flex;gap:8px;margin-bottom:4px;">
-              <button id="btn-start" onclick="openNewTaskModal()" class="btn btn-dark btn-sm" style="flex:1;justify-content:center;">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                <span data-i18n="overview.newTask">新建任务</span>
-              </button>
-              <button id="btn-stop" onclick="stopTask()" class="btn btn-secondary btn-sm" style="flex:1;justify-content:center;" disabled data-i18n="overview.stop">停止</button>
+          <div class="db-stat-card" onclick="switchPage('accounts');switchAccountTab('google');" style="cursor:pointer;" title="点击前往查看 Stripe 付款链接">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(99,102,241,0.12);display:flex;align-items:center;justify-content:center;color:#6366f1;flex-shrink:0;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
             </div>
-            <!-- 实时状态 -->
-            <div class="db-sub-card" style="flex:none;">
-              <div class="db-sub-card-head">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                <span data-i18n="overview.liveStatus">实时状态</span>
-              </div>
-              <div class="db-sub-row"><span id="st-progress-label" data-i18n="overview.progress">进度</span><span id="st-progress" style="font-weight:600;">0/0</span></div>
-              <div id="progress-track" class="db-progress-track" role="progressbar" aria-labelledby="st-progress-label" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                <div id="progress-bar" class="db-progress-fill"></div>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
-                <div class="db-sub-row"><span data-i18n="overview.success">成功</span><span class="db-num-green" id="st-success">0</span></div>
-                <div class="db-sub-row"><span data-i18n="overview.failed">失败</span><span class="db-num-red" id="st-failed">0</span></div>
-                <div class="db-sub-row"><span data-i18n="overview.elapsed">已耗时</span><span id="st-elapsed">0s</span></div>
-                <div class="db-sub-row"><span data-i18n="overview.avg">平均耗时</span><span id="st-avg">-</span></div>
+            <div>
+              <div class="db-stat-label">24h 订阅链接</div>
+              <div style="display:flex;align-items:baseline;gap:6px;">
+                <div class="db-stat-value" id="ov-payment-links-count" style="color:#6366f1;">0</div>
+                <span style="font-size:11px;color:#10b981;font-weight:600;">免登录有效</span>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- ===== 详情与控制网格 (双列响应式) ===== -->
+        <div class="db-detail-grid" style="display:grid;grid-template-columns:1.08fr 0.92fr;gap:20px;">
+          <!-- 列 1: 自动化任务控制 -->
+          <div class="db-detail-section">
+            <div class="db-detail-top">
+              <div class="db-detail-title">
+                <span class="db-detail-title-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3.34 19a10 10 0 1 1 17.32 0"/>
+                    <path d="m12 14 4-4"/>
+                  </svg>
+                </span>
+                <span data-i18n="overview.taskControl">任务控制</span>
+              </div>
+              <div class="db-detail-actions">
+                <span class="status-dot" id="st-dot"></span>
+              </div>
+            </div>
+            <div class="db-detail-body" style="flex-direction:column;gap:14px;">
+              <!-- 操作按钮 -->
+              <div style="display:flex;gap:8px;">
+                <button id="btn-start" onclick="openNewTaskModal()" class="btn btn-dark btn-sm" style="flex:1;justify-content:center;height:36px;font-size:13px;font-weight:600;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span data-i18n="overview.newTask">新建任务</span>
+                </button>
+                <button id="btn-stop" onclick="stopTask()" class="btn btn-secondary btn-sm" style="flex:1;justify-content:center;height:36px;font-size:13px;" disabled data-i18n="overview.stop">停止</button>
+              </div>
+              <!-- 实时状态 -->
+              <div class="db-sub-card" style="flex:none;">
+                <div class="db-sub-card-head">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                  <span data-i18n="overview.liveStatus">实时状态</span>
+                </div>
+                <div class="db-sub-row"><span id="st-progress-label" data-i18n="overview.progress">进度</span><span id="st-progress" style="font-weight:600;">0/0</span></div>
+                <div id="progress-track" class="db-progress-track" role="progressbar" aria-labelledby="st-progress-label" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <div id="progress-bar" class="db-progress-fill"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+                  <div class="db-sub-row"><span data-i18n="overview.success">成功</span><span class="db-num-green" id="st-success">0</span></div>
+                  <div class="db-sub-row"><span data-i18n="overview.failed">失败</span><span class="db-num-red" id="st-failed">0</span></div>
+                  <div class="db-sub-row"><span data-i18n="overview.elapsed">已耗时</span><span id="st-elapsed">0s</span></div>
+                  <div class="db-sub-row"><span data-i18n="overview.avg">平均耗时</span><span id="st-avg">-</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 列 2: Google 自动化与订阅中心 -->
+          <div class="db-detail-section">
+            <div class="db-detail-top">
+              <div class="db-detail-title">
+                <span class="db-detail-title-icon" style="color:#6366f1;">
+                  <img src="assets/google.svg" style="width:16px;height:16px;">
+                </span>
+                <span>Google 自动化与订阅就绪</span>
+              </div>
+              <div class="db-detail-actions">
+                <span class="badge badge-success" style="font-size:10px;padding:2px 8px;">24h 免密有效</span>
+              </div>
+            </div>
+            <div class="db-detail-body" style="flex-direction:column;gap:14px;">
+              <!-- 账号状态分布条卡片 -->
+              <div class="db-sub-card" style="flex:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">环境状态分布</span>
+                  <span style="font-size:11px;color:var(--text-muted);">共 <strong id="ov-sub-total" style="color:var(--text);">0</strong> 个环境</span>
+                </div>
+                <!-- 三色堆叠分布条 -->
+                <div style="height:8px;background:var(--bg-subtle);border-radius:9999px;overflow:hidden;display:flex;margin-bottom:10px;">
+                  <div id="ov-bar-auth" style="height:100%;width:0%;background:#10b981;transition:width 0.3s;" title="已授权 Kiro"></div>
+                  <div id="ov-bar-ready" style="height:100%;width:0%;background:#6366f1;transition:width 0.3s;" title="已就绪 (已登录 Google)"></div>
+                  <div id="ov-bar-uninit" style="height:100%;width:0%;background:#9ca3af;transition:width 0.3s;" title="未登录"></div>
+                </div>
+                <!-- 图例标签 -->
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);flex-wrap:wrap;gap:4px;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:#10b981;"></span>
+                    <span>已授权: <strong id="ov-sub-auth" style="color:#059669;">0</strong></span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:#6366f1;"></span>
+                    <span>已就绪: <strong id="ov-sub-ready" style="color:#4f46e5;">0</strong></span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:#9ca3af;"></span>
+                    <span>未登录: <strong id="ov-sub-uninit" style="color:var(--text-muted);">0</strong></span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:#8b5cf6;"></span>
+                    <span>有效链接: <strong id="ov-sub-links" style="color:#7c3aed;">0</strong></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 快捷操作矩阵 -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <button onclick="switchPage('accounts');switchAccountTab('google');" class="btn btn-secondary btn-sm" style="justify-content:center;height:34px;font-size:11.5px;font-weight:600;">
+                  <img src="assets/google.svg" style="width:13px;height:13px;margin-right:4px;">
+                  <span>管理 Google 账号池</span>
+                </button>
+                <button onclick="switchPage('accounts');switchAccountTab('google');openAutofillStripeModal('', '');" class="btn btn-secondary btn-sm" style="justify-content:center;height:34px;font-size:11.5px;font-weight:600;color:#6366f1;">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                  <span>Stripe 仿真自动填卡</span>
+                </button>
+              </div>
+
+              <!-- 提示小徽章 -->
+              <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.15);border-radius:8px;padding:8px 10px;font-size:11px;line-height:1.5;color:var(--text-secondary);">
+                💡 <b>免登直付特性</b>：生成的 Stripe Checkout 链接具备 24 小时存活期，无需登录账号即可直接在任意浏览器打开完成绑卡付款。
+              </div>
+            </div>
+          </div>
+        </div>
 
       </div>
     </div>
@@ -330,7 +420,7 @@
 
     <!-- ===== Page: 关于 ===== -->
     <div class="page" id="page-info">
-      <div class="page-scroll" style="max-width:800px;margin:0 auto;">
+      <div class="page-scroll" style="padding:28px 32px 40px;max-width:800px;margin:0 auto;">
 
         <!-- 应用信息卡片 -->
         <div class="card" style="margin-bottom:20px;">
@@ -605,7 +695,7 @@
     </div>
 
     <!-- ===== Page: 运行日志 ===== -->
-    <div class="page" id="page-logs" style="height:calc(100vh - 48px);overflow:hidden;">
+    <div class="page" id="page-logs" style="height:100%;overflow:hidden;">
       <div style="padding:20px 24px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;">
         <div class="logs-panel" style="flex:1;min-height:0;display:flex;flex-direction:column;">
           <div class="logs-panel-header" style="display:flex;align-items:center;justify-content:space-between;">
@@ -691,6 +781,10 @@
                       <img class="email-provider-icon" src="assets/icloud.svg" alt="">
                       <span data-dropdown-label>iCloud</span>
                     </div>
+                    <div class="dropdown-option email-provider-option" data-value="google_oauth">
+                      <img class="email-provider-icon" src="assets/google.svg" alt="">
+                      <span data-dropdown-label>Google (独立 Profile)</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -727,6 +821,21 @@
                   </label>
                   <div id="cfg-cloudmail-domains-list" class="moemail-domains-container">
                     <div style="text-align:center;color:var(--text-muted);font-size:12px;padding:12px;" data-i18n="common.loading">加载中...</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Google 独立 Profile 选项提示 -->
+              <div id="google-config-select" style="display:none;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                    <img src="assets/google.svg" style="width:14px;height:14px;" alt="">
+                    <span>Google 自动化说明</span>
+                  </label>
+                  <div style="font-size:11px;color:var(--text-muted);line-height:1.6;background:var(--bg-subtle);padding:10px 12px;border-radius:8px;border:1px solid var(--border);">
+                    <div style="margin-bottom:4px;"><strong style="color:var(--text);">• 全自动流程：</strong>自动输入密码/2FA/辅助邮箱并自动确认 Kiro 授权。</div>
+                    <div style="margin-bottom:4px;"><strong style="color:var(--text);">• 并发建议：</strong>建议设置 <span style="color:#059669;font-weight:700;">3 ~ 5</span> 线程，流畅防卡死。</div>
+                    <div><strong style="color:var(--text);">• 独立代理：</strong>各任务自动绑定该账号在“邮箱池”配置的代理。</div>
                   </div>
                 </div>
               </div>
@@ -840,234 +949,361 @@
 
     <!-- ===== Page: 邮箱池 ===== -->
     <div class="page" id="page-accounts">
-      <div class="page-scroll" style="max-width:800px;margin:0 auto;">
+      <div class="page-scroll" style="max-width:100%;margin:0 auto;padding:18px 20px;">
 
-        <!-- MoeMail 配置 -->
-        <div class="card" style="flex-shrink:0;margin-bottom:20px;">
-          <div class="settings-group">
-            <div class="settings-group-title" style="display:flex;align-items:center;justify-content:space-between;">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <img class="email-provider-icon" src="assets/moemail.svg" alt="">
-                <span data-i18n="accounts.moemailTitle">MoeMail 临时邮箱</span>
-              </div>
-              <span id="settings-moemail-summary" style="font-size:12px;font-weight:600;color:var(--text-muted);padding:4px 10px;background:var(--bg-subtle);border-radius:6px;" data-i18n="moemail.summaryNone">未配置</span>
-            </div>
-            <div class="moemail-add-section">
-              <div class="moemail-add-header">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                <span data-i18n="accounts.addConfig">添加新配置</span>
-              </div>
-              <div class="moemail-add-body">
-                <div class="moemail-input-row">
-                  <div class="moemail-input-group" style="flex:1;">
-                    <label><span data-i18n="accounts.configName">名称</span> <span style="font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;" data-i18n="accounts.optional">(可选)</span></label>
-                    <input type="text" id="moemail-inline-name" placeholder="自动生成" data-i18n-placeholder="accounts.configNamePlaceholder" class="form-input">
-                  </div>
-                  <div class="moemail-input-group" style="flex:2;">
-                    <label data-i18n="accounts.apiUrl">API URL</label>
-                    <input type="text" id="moemail-inline-url" placeholder="https://moemail.app" class="form-input">
-                  </div>
-                  <div class="moemail-input-group" style="flex:2;">
-                    <label data-i18n="accounts.apiKey">API Key</label>
-                    <input type="text" id="moemail-inline-apikey" placeholder="YOUR_API_KEY" class="form-input">
-                  </div>
-                </div>
-                <div class="moemail-action-row">
-                  <button onclick="inlineTestMoeMail()" class="btn btn-secondary btn-sm" id="moemail-inline-test-btn">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    <span data-i18n="accounts.testConnection">测试连接</span>
-                  </button>
-                  <button onclick="inlineAddMoeMail()" class="btn btn-dark btn-sm">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                    <span data-i18n="accounts.addConfigBtn">添加配置</span>
-                  </button>
-                  <span id="moemail-inline-status" class="moemail-status-text"></span>
-                </div>
-              </div>
-            </div>
-            <div id="moemail-inline-list" class="moemail-config-list"></div>
+        <!-- 顶部 Segmented Tabs 切换栏 -->
+        <div class="account-tabs-wrapper">
+          <div class="segmented-tabs" role="tablist">
+            <button type="button" class="segmented-tab-btn active" id="tab-btn-google" onclick="switchAccountTab('google')" role="tab">
+              <img src="assets/google.svg" style="width:16px;height:16px;">
+              <span>Google 账号池 (独立 Profile)</span>
+              <span class="tab-badge" id="tab-badge-google">0</span>
+            </button>
+            <button type="button" class="segmented-tab-btn" id="tab-btn-outlook" onclick="switchAccountTab('outlook')" role="tab">
+              <img src="assets/outlook.svg" style="width:16px;height:16px;">
+              <span data-i18n="accounts.outlookTitle">微软 Outlook</span>
+              <span class="tab-badge" id="tab-badge-outlook">0</span>
+            </button>
+            <button type="button" class="segmented-tab-btn" id="tab-btn-icloud" onclick="switchAccountTab('icloud')" role="tab">
+              <img src="assets/icloud.svg" style="width:16px;height:16px;">
+              <span data-i18n="accounts.icloudTitle">Apple iCloud</span>
+              <span class="tab-badge" id="tab-badge-icloud">0</span>
+            </button>
+            <button type="button" class="segmented-tab-btn" id="tab-btn-tempmail" onclick="switchAccountTab('tempmail')" role="tab">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span>临时邮箱 API</span>
+            </button>
           </div>
         </div>
 
-        <!-- Cloud-Mail 配置 -->
-        <div class="card" style="flex-shrink:0;margin-bottom:20px;">
-          <div class="settings-group">
-            <div class="settings-group-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <!-- Tab 1: Google 账号列表 (独立 Profile) -->
+        <div id="account-tab-content-google" class="account-tab-content">
+          <div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:480px;box-shadow:var(--shadow-sm);border:1px solid var(--border);">
+            <!-- 行 1: 标题 + 指标摘要微型胶囊 -->
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:12px;background:var(--bg-subtle);">
               <div style="display:flex;align-items:center;gap:10px;">
-                <img class="email-provider-icon" src="assets/cloudmail.svg" alt="">
-                <span data-i18n="accounts.cloudmailTitle">Cloud-Mail 自部署邮箱</span>
+                <div style="width:34px;height:34px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+                  <img src="assets/google.svg" alt="" style="width:20px;height:20px;">
+                </div>
+                <div>
+                  <div style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.2px;">Google 账号池 (独立 Profile)</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:1px;">物理隔离独立环境 · 免二次验证 · 24h 订阅免密支付</div>
+                </div>
               </div>
-              <span id="settings-cloudmail-summary" style="font-size:12px;font-weight:600;color:var(--text-muted);padding:4px 10px;background:var(--bg-subtle);border-radius:6px;" data-i18n="cloudmail.summaryNone">未配置</span>
-            </div>
-            <div class="moemail-add-section">
-              <div class="moemail-add-header">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                <span data-i18n="accounts.addConfig">添加新配置</span>
-              </div>
-              <div class="moemail-add-body">
-                <div class="moemail-input-row">
-                  <div class="moemail-input-group" style="flex:1;">
-                    <label><span data-i18n="accounts.configName">名称</span> <span style="font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;" data-i18n="accounts.optional">(可选)</span></label>
-                    <input type="text" id="cloudmail-inline-name" placeholder="自动生成" data-i18n-placeholder="accounts.configNamePlaceholder" class="form-input">
-                  </div>
-                  <div class="moemail-input-group" style="flex:2;">
-                    <label data-i18n="accounts.apiUrl">URL</label>
-                    <input type="text" id="cloudmail-inline-url" placeholder="https://mail.example.com" class="form-input">
-                  </div>
+              <div class="stat-capsules-bar">
+                <div class="stat-capsule" title="当前加载的 Google 账号总数">
+                  <span>总数</span>
+                  <strong id="google-stat-total">0</strong>
                 </div>
-                <div class="moemail-input-row">
-                  <div class="moemail-input-group" style="flex:1;">
-                    <label data-i18n="cloudmail.adminEmail">管理员邮箱</label>
-                    <input type="text" id="cloudmail-inline-email" placeholder="admin@example.com" class="form-input">
-                  </div>
-                  <div class="moemail-input-group" style="flex:1;">
-                    <label data-i18n="cloudmail.adminPassword">管理员密码</label>
-                    <input type="password" id="cloudmail-inline-password" placeholder="••••••••" class="form-input">
-                  </div>
+                <div class="stat-capsule" title="已成功完成 Kiro 授权的账号">
+                  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;"></span>
+                  <span>已授权</span>
+                  <strong id="google-stat-authorized" style="color:#059669;">0</strong>
                 </div>
-                <div class="moemail-action-row">
-                  <button onclick="inlineTestCloudMail()" class="btn btn-secondary btn-sm" id="cloudmail-inline-test-btn">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    <span data-i18n="accounts.testConnection">测试连接</span>
-                  </button>
-                  <button onclick="inlineAddCloudMail()" class="btn btn-dark btn-sm">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                    <span data-i18n="accounts.addConfigBtn">添加配置</span>
-                  </button>
-                  <span id="cloudmail-inline-status" class="moemail-status-text"></span>
+                <div class="stat-capsule" title="已完成 Google 登录的账号">
+                  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#6366f1;"></span>
+                  <span>已就绪</span>
+                  <strong id="google-stat-ready" style="color:#4f46e5;">0</strong>
                 </div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.5;" data-i18n="cloudmail.domainHint">域名将在保存或测试连接时自动从服务器拉取，无需手动填写。</div>
+                <div class="stat-capsule" title="尚未登录的账号">
+                  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text-muted);"></span>
+                  <span>未登录</span>
+                  <strong id="google-stat-uninit" style="color:var(--text-muted);">0</strong>
+                </div>
+                <div class="stat-capsule" title="具备有效 24h Stripe 结账链接的账号">
+                  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#8b5cf6;"></span>
+                  <span>有效链接</span>
+                  <strong id="google-stat-links" style="color:#7c3aed;">0</strong>
+                </div>
               </div>
             </div>
-            <div id="cloudmail-inline-list" class="moemail-config-list"></div>
+
+            <!-- 行 2: 核心功能操作栏 -->
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;background:var(--bg-card);">
+              <!-- 左侧业务快捷键 -->
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:6px;background:var(--bg-subtle);padding:3px 10px;border-radius:8px;border:1px solid var(--border);">
+                  <span style="font-size:11px;color:var(--text-secondary);font-weight:600;">目标套餐:</span>
+                  <select id="google-target-plan" class="form-input" style="width:auto;height:26px;font-size:11px;padding:0 6px;border:none;background:transparent;cursor:pointer;font-weight:700;color:var(--text);">
+                    <option value="KIRO_PRO" selected>Kiro Pro ($20/月)</option>
+                    <option value="KIRO_PRO_PLUS">Kiro Pro+ ($40/月)</option>
+                    <option value="KIRO_PRO_MAX">Kiro Pro Max ($100/月)</option>
+                    <option value="KIRO_POWER">Kiro Power ($200/月)</option>
+                  </select>
+                </div>
+
+                <button onclick="batchGenerateGooglePaymentLinks()" class="btn btn-dark btn-sm" style="background:#4f46e5;color:#fff;border-color:#4f46e5;font-weight:600;box-shadow:0 2px 5px rgba(79,70,229,0.25);" title="为选中的或全部已授权账号批量生成 Stripe 24h 免登录结账付款链接">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  <span>生成付款链接</span>
+                </button>
+
+                <button onclick="openAutofillStripeModal('', '')" class="btn btn-dark btn-sm" style="background:#7c3aed;color:#fff;border-color:#7c3aed;font-weight:600;box-shadow:0 2px 5px rgba(124,58,237,0.25);" title="打开 Stripe 结账仿真自动填卡工具">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                  <span>仿真填卡</span>
+                </button>
+              </div>
+
+              <!-- 右侧维护与批处理 -->
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <button onclick="openAddGoogleModal()" class="btn btn-dark btn-sm">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  <span>添加账号</span>
+                </button>
+                <button onclick="batchAutoLoginGoogle()" class="btn btn-dark btn-sm" style="background:#059669;color:#fff;border-color:#059669;font-weight:600;" title="对所有未登录账号依次启动全自动登录">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  <span>批量登录</span>
+                </button>
+                <button onclick="openBatchChangeGoogle2FAModal()" class="btn btn-secondary btn-sm" title="对勾选的 Google 账号批量在谷歌安全中心修改/重置 2FA">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <span>批量改2FA</span>
+                </button>
+                <button onclick="exportGoogleKiroCredentialsBatch()" class="btn btn-secondary btn-sm" title="导出所勾选或全部 Google 账号的 Kiro 凭据 JSON (兼容 KAM 与 IDE)">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span>导出Kiro凭据</span>
+                </button>
+                <button onclick="syncGoogleStatus()" class="btn btn-secondary btn-sm" title="检测本地独立 Profile 是否已登录">同步</button>
+                <button onclick="clearAllGoogleAccounts()" class="btn btn-danger btn-sm" title="清空全部账号及 Profile">清空</button>
+              </div>
+            </div>
+
+            <!-- 表格容器 -->
+            <div style="flex:1;overflow-x:auto;min-height:0;">
+              <table style="width:100%;border-collapse:collapse;min-width:920px;">
+                <thead>
+                  <tr style="background:var(--bg-subtle);border-bottom:1px solid var(--border);">
+                    <th style="width:38px;padding:12px 8px;text-align:center;">
+                      <input type="checkbox" id="google-select-all" onchange="toggleSelectAllGoogle(this)" title="全选 / 反选" style="cursor:pointer;">
+                    </th>
+                    <th style="min-width:190px;padding:12px 10px;text-align:left;font-size:12px;font-weight:600;color:var(--text-secondary);">邮箱与活跃时间</th>
+                    <th style="width:125px;padding:12px 10px;text-align:left;font-size:12px;font-weight:600;color:var(--text-secondary);">独立代理</th>
+                    <th style="width:105px;padding:12px 10px;text-align:left;font-size:12px;font-weight:600;color:var(--text-secondary);">环境状态</th>
+                    <th style="width:180px;padding:12px 10px;text-align:left;font-size:12px;font-weight:600;color:var(--text-secondary);">Stripe 付款链接</th>
+                    <th style="width:295px;padding:12px 14px;text-align:right;font-size:12px;font-weight:600;color:var(--text-secondary);">快捷操作</th>
+                  </tr>
+                </thead>
+                <tbody id="google-account-list">
+                  <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px 20px;">暂无 Google 账号，请点击上方“添加账号”导入</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+
+        <!-- Tab 2: 微软 Outlook 账号列表 -->
+        <div id="account-tab-content-outlook" class="account-tab-content" style="display:none;">
+          <div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:420px;box-shadow:var(--shadow-sm);border:1px solid var(--border);">
+            <div class="settings-group-title" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <img src="assets/outlook.svg" alt="" style="width:18px;height:18px;">
+                <span data-i18n="accounts.outlookTitle">微软邮箱</span>
+                <span style="font-size:12px;font-weight:600;color:var(--text-muted);padding:3px 8px;background:var(--bg-subtle);border-radius:6px;"><span data-i18n="accounts.count">共</span> <span id="outlook-count">0</span> <span data-i18n="accounts.countUnit">个</span></span>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button onclick="openAddOutlookModal()" class="btn btn-dark btn-sm">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  <span data-i18n="accounts.addAccount">添加账号</span>
+                </button>
+                <button onclick="clearRegisteredOutlookAccounts()" class="btn btn-secondary btn-sm" data-i18n="accounts.clearRegistered">清除已注册</button>
+                <button onclick="clearAllOutlookAccounts()" class="btn btn-danger btn-sm" data-i18n="common.clearAll">清空全部</button>
+              </div>
+            </div>
+            <div style="flex:1;overflow-x:auto;min-height:0;">
+              <table style="width:100%;">
+                <thead><tr>
+                  <th style="width:40px;padding:10px 16px;" data-i18n="accounts.thIndex">#</th>
+                  <th style="padding:10px 8px;" data-i18n="accounts.thEmail">邮箱地址</th>
+                  <th style="width:80px;padding:10px 8px;" data-i18n="accounts.thStatus">状态</th>
+                  <th style="width:120px;padding:10px 8px;" data-i18n="accounts.thAddedAt">添加时间</th>
+                  <th style="width:60px;padding:10px 16px;text-align:right;" data-i18n="accounts.thActions">操作</th>
+                </tr></thead>
+                <tbody id="parsed-outlook-body"></tbody>
+              </table>
+            </div>
+            <div id="outlook-pager" style="display:none;padding:12px 16px;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-secondary);border-top:1px solid var(--border);flex-shrink:0;">
+              <span id="outlook-pager-info"></span>
+              <div style="display:flex;gap:8px;">
+                <button onclick="changeOutlookPage(-1)" id="outlook-pager-prev" class="btn btn-secondary btn-sm" data-i18n="common.prevPage">上一页</button>
+                <button onclick="changeOutlookPage(1)" id="outlook-pager-next" class="btn btn-secondary btn-sm" data-i18n="common.nextPage">下一页</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: iCloud 账号列表 -->
+        <div id="account-tab-content-icloud" class="account-tab-content" style="display:none;">
+          <div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:300px;box-shadow:var(--shadow-sm);border:1px solid var(--border);">
+            <div class="settings-group-title" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <img src="assets/icloud.svg" alt="" style="width:18px;height:18px;">
+                <span data-i18n="accounts.icloudTitle">iCloud 邮箱</span>
+                <span style="font-size:12px;font-weight:600;color:var(--text-muted);padding:3px 8px;background:var(--bg-subtle);border-radius:6px;"><span data-i18n="accounts.count">共</span> <span id="icloud-count">0</span> <span data-i18n="accounts.countUnit">个</span></span>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button onclick="openAddICloudModal()" class="btn btn-dark btn-sm">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  <span data-i18n="accounts.addAccount">添加账号</span>
+                </button>
+                <button onclick="clearAllICloudAccounts()" class="btn btn-danger btn-sm" data-i18n="common.clearAll">清空全部</button>
+              </div>
+            </div>
+            <div style="flex:1;overflow-x:auto;min-height:0;">
+              <table style="width:100%;">
+                <thead><tr>
+                  <th style="width:40px;padding:10px 16px;" data-i18n="accounts.thIndex">#</th>
+                  <th style="padding:10px 8px;" data-i18n="accounts.thEmail">邮箱地址</th>
+                  <th style="width:80px;padding:10px 8px;" data-i18n="accounts.thStatus">状态</th>
+                  <th style="width:120px;padding:10px 8px;" data-i18n="accounts.thAddedAt">添加时间</th>
+                  <th style="width:60px;padding:10px 16px;text-align:right;" data-i18n="accounts.thActions">操作</th>
+                </tr></thead>
+                <tbody id="parsed-icloud-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: 临时邮箱服务 (Moe/Cloud/MailNest) -->
+        <div id="account-tab-content-tempmail" class="account-tab-content" style="display:none;">
+          <!-- MoeMail 配置 -->
+          <div class="card" style="flex-shrink:0;margin-bottom:20px;box-shadow:var(--shadow-sm);border:1px solid var(--border);">
+            <div class="settings-group">
+              <div class="settings-group-title" style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <img class="email-provider-icon" src="assets/moemail.svg" alt="">
+                  <span data-i18n="accounts.moemailTitle">MoeMail 临时邮箱</span>
+                </div>
+                <span id="settings-moemail-summary" style="font-size:12px;font-weight:600;color:var(--text-muted);padding:4px 10px;background:var(--bg-subtle);border-radius:6px;" data-i18n="moemail.summaryNone">未配置</span>
+              </div>
+              <div class="moemail-add-section">
+                <div class="moemail-add-header">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  <span data-i18n="accounts.addConfig">添加新配置</span>
+                </div>
+                <div class="moemail-add-body">
+                  <div class="moemail-input-row">
+                    <div class="moemail-input-group" style="flex:1;">
+                      <label><span data-i18n="accounts.configName">名称</span> <span style="font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;" data-i18n="accounts.optional">(可选)</span></label>
+                      <input type="text" id="moemail-inline-name" placeholder="自动生成" data-i18n-placeholder="accounts.configNamePlaceholder" class="form-input">
+                    </div>
+                    <div class="moemail-input-group" style="flex:2;">
+                      <label data-i18n="accounts.apiUrl">API URL</label>
+                      <input type="text" id="moemail-inline-url" placeholder="https://moemail.app" class="form-input">
+                    </div>
+                    <div class="moemail-input-group" style="flex:2;">
+                      <label data-i18n="accounts.apiKey">API Key</label>
+                      <input type="text" id="moemail-inline-apikey" placeholder="YOUR_API_KEY" class="form-input">
+                    </div>
+                  </div>
+                  <div class="moemail-action-row">
+                    <button onclick="inlineTestMoeMail()" class="btn btn-secondary btn-sm" id="moemail-inline-test-btn">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      <span data-i18n="accounts.testConnection">测试连接</span>
+                    </button>
+                    <button onclick="inlineAddMoeMail()" class="btn btn-dark btn-sm">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                      <span data-i18n="accounts.addConfigBtn">添加配置</span>
+                    </button>
+                    <span id="moemail-inline-status" class="moemail-status-text"></span>
+                  </div>
+                </div>
+              </div>
+              <div id="moemail-inline-list" class="moemail-config-list"></div>
+            </div>
+          </div>
+
+          <!-- Cloud-Mail 配置 -->
+          <div class="card" style="flex-shrink:0;margin-bottom:20px;box-shadow:var(--shadow-sm);border:1px solid var(--border);">
+            <div class="settings-group">
+              <div class="settings-group-title" style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <img class="email-provider-icon" src="assets/cloudmail.svg" alt="">
+                  <span data-i18n="accounts.cloudmailTitle">Cloud-Mail 自部署邮箱</span>
+                </div>
+                <span id="settings-cloudmail-summary" style="font-size:12px;font-weight:600;color:var(--text-muted);padding:4px 10px;background:var(--bg-subtle);border-radius:6px;" data-i18n="cloudmail.summaryNone">未配置</span>
+              </div>
+              <div class="moemail-add-section">
+                <div class="moemail-add-header">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  <span data-i18n="accounts.addConfig">添加新配置</span>
+                </div>
+                <div class="moemail-add-body">
+                  <div class="moemail-input-row">
+                    <div class="moemail-input-group" style="flex:1;">
+                      <label><span data-i18n="accounts.configName">名称</span> <span style="font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;" data-i18n="accounts.optional">(可选)</span></label>
+                      <input type="text" id="cloudmail-inline-name" placeholder="自动生成" data-i18n-placeholder="accounts.configNamePlaceholder" class="form-input">
+                    </div>
+                    <div class="moemail-input-group" style="flex:2;">
+                      <label data-i18n="accounts.apiUrl">API URL</label>
+                      <input type="text" id="cloudmail-inline-url" placeholder="https://mail.example.com" class="form-input">
+                    </div>
+                    <div class="moemail-input-group" style="flex:1;">
+                      <label data-i18n="accounts.email">邮箱</label>
+                      <input type="text" id="cloudmail-inline-email" placeholder="admin@example.com" class="form-input">
+                    </div>
+                    <div class="moemail-input-group" style="flex:1;">
+                      <label data-i18n="accounts.password">密码</label>
+                      <input type="password" id="cloudmail-inline-password" placeholder="••••••" class="form-input">
+                    </div>
+                  </div>
+                  <div class="moemail-action-row">
+                    <button onclick="inlineTestCloudMail()" class="btn btn-secondary btn-sm" id="cloudmail-inline-test-btn">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      <span data-i18n="accounts.testConnection">测试连接</span>
+                    </button>
+                    <button onclick="inlineAddCloudMail()" class="btn btn-dark btn-sm">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                      <span data-i18n="accounts.addConfigBtn">添加配置</span>
+                    </button>
+                    <span id="cloudmail-inline-status" class="moemail-status-text"></span>
+                  </div>
+                </div>
+              </div>
+              <div id="cloudmail-inline-list" class="moemail-config-list"></div>
+            </div>
+          </div>
 
           <!-- MailNest 配置 -->
-          <div class="card" style="flex-shrink:0;margin-bottom:20px;">
-              <div class="settings-group">
-                  <div class="settings-group-title"
-                       style="display:flex;align-items:center;justify-content:space-between;">
-                      <div style="display:flex;align-items:center;gap:10px;">
-                          <img class="email-provider-icon email-provider-icon-mailnest" src="assets/mailnest.svg" alt="">
-                          <span data-i18n="accounts.mailnestTitle">MailNest 临时邮箱</span>
-                      </div>
-                      <span id="settings-mailnest-summary"
-                            style="font-size:12px;font-weight:600;color:var(--text-muted);padding:4px 10px;background:var(--bg-subtle);border-radius:6px;"
-                            data-i18n="mailnest.summaryNone">未配置</span>
-                  </div>
-                  <div class="moemail-add-section">
-                      <div class="moemail-add-header">
-                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
-                               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M12 5v14M5 12h14"/>
-                          </svg>
-                          <span data-i18n="accounts.addConfig">添加新配置</span>
-                      </div>
-                      <div class="moemail-add-body">
-                          <div class="moemail-input-row">
-                              <div class="moemail-input-group" style="flex:2;">
-                                  <label data-i18n="accounts.apiKey">API Key</label>
-                                  <input type="text" id="mailnest-inline-apikey" placeholder="YOUR_API_KEY"
-                                         class="form-input">
-                              </div>
-                              <div class="moemail-input-group" style="flex:2;">
-                                  <label data-i18n="accounts.projectCode">项目代码</label>
-                                  <input type="text" id="mailnest-inline-project-code" placeholder="aws001"
-                                         class="form-input">
-                              </div>
-                          </div>
-                          <div class="moemail-action-row">
-                              <button onclick="inlineTestMailNest()" class="btn btn-secondary btn-sm"
-                                      id="mailnest-inline-test-btn">
-                                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
-                                       stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                      <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
-                                      <polyline points="22 4 12 14.01 9 11.01"/>
-                                  </svg>
-                                  <span data-i18n="accounts.testConnection">测试连接</span>
-                              </button>
-                              <button onclick="inlineAddMailNest()" class="btn btn-dark btn-sm">
-                                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
-                                       stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                      <path d="M12 5v14M5 12h14"/>
-                                  </svg>
-                                  <span data-i18n="accounts.addConfigBtn">添加配置</span>
-                              </button>
-                              <span id="mailnest-inline-status" class="moemail-status-text"></span>
-                          </div>
-                      </div>
-                  </div>
+          <div class="card" style="flex-shrink:0;margin-bottom:20px;box-shadow:var(--shadow-sm);border:1px solid var(--border);">
+            <div class="settings-group">
+              <div class="settings-group-title" style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <img class="email-provider-icon email-provider-icon-mailnest" src="assets/mailnest.svg" alt="">
+                  <span data-i18n="accounts.mailnestTitle">MailNest 临时邮箱</span>
+                </div>
+                <span id="settings-mailnest-summary" style="font-size:12px;font-weight:600;color:var(--text-muted);padding:4px 10px;background:var(--bg-subtle);border-radius:6px;" data-i18n="mailnest.summaryNone">未配置</span>
               </div>
-          </div>
-
-        <!-- 账号列表 -->
-        <div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:420px;">
-          <div class="settings-group-title" style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid var(--border);flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <img src="assets/outlook.svg" alt="" style="width:18px;height:18px;">
-              <span data-i18n="accounts.outlookTitle">微软邮箱</span>
-              <span style="font-size:12px;font-weight:600;color:var(--text-muted);padding:3px 8px;background:var(--bg-subtle);border-radius:6px;"><span data-i18n="accounts.count">共</span> <span id="outlook-count">0</span> <span data-i18n="accounts.countUnit">个</span></span>
-            </div>
-            <div style="display:flex;gap:8px;">
-              <button onclick="openAddOutlookModal()" class="btn btn-dark btn-sm">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                <span data-i18n="accounts.addAccount">添加账号</span>
-              </button>
-              <button onclick="clearRegisteredOutlookAccounts()" class="btn btn-secondary btn-sm" data-i18n="accounts.clearRegistered">清除已注册</button>
-              <button onclick="clearAllOutlookAccounts()" class="btn btn-danger btn-sm" data-i18n="common.clearAll">清空全部</button>
-            </div>
-          </div>
-          <div style="flex:1;overflow-x:auto;min-height:0;">
-            <table style="width:100%;">
-              <thead><tr>
-                <th style="width:40px;padding:10px 16px;" data-i18n="accounts.thIndex">#</th>
-                <th style="padding:10px 8px;" data-i18n="accounts.thEmail">邮箱地址</th>
-                <th style="width:80px;padding:10px 8px;" data-i18n="accounts.thStatus">状态</th>
-                <th style="width:120px;padding:10px 8px;" data-i18n="accounts.thAddedAt">添加时间</th>
-                <th style="width:60px;padding:10px 16px;text-align:right;" data-i18n="accounts.thActions">操作</th>
-              </tr></thead>
-              <tbody id="parsed-outlook-body"></tbody>
-            </table>
-          </div>
-          <div id="outlook-pager" style="display:none;padding:12px 16px;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-secondary);border-top:1px solid var(--border);flex-shrink:0;">
-            <span id="outlook-pager-info"></span>
-            <div style="display:flex;gap:8px;">
-              <button onclick="changeOutlookPage(-1)" id="outlook-pager-prev" class="btn btn-secondary btn-sm" data-i18n="common.prevPage">上一页</button>
-              <button onclick="changeOutlookPage(1)" id="outlook-pager-next" class="btn btn-secondary btn-sm" data-i18n="common.nextPage">下一页</button>
+              <div class="moemail-add-section">
+                <div class="moemail-add-header">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  <span data-i18n="accounts.addConfig">添加新配置</span>
+                </div>
+                <div class="moemail-add-body">
+                  <div class="moemail-input-row">
+                    <div class="moemail-input-group" style="flex:2;">
+                      <label data-i18n="accounts.apiKey">API Key</label>
+                      <input type="text" id="mailnest-inline-apikey" placeholder="YOUR_API_KEY" class="form-input">
+                    </div>
+                    <div class="moemail-input-group" style="flex:2;">
+                      <label data-i18n="accounts.projectCode">项目代码</label>
+                      <input type="text" id="mailnest-inline-project-code" placeholder="aws001" class="form-input">
+                    </div>
+                  </div>
+                  <div class="moemail-action-row">
+                    <button onclick="inlineTestMailNest()" class="btn btn-secondary btn-sm" id="mailnest-inline-test-btn">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      <span data-i18n="accounts.testConnection">测试连接</span>
+                    </button>
+                    <button onclick="inlineAddMailNest()" class="btn btn-dark btn-sm">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                      <span data-i18n="accounts.addConfigBtn">添加配置</span>
+                    </button>
+                    <span id="mailnest-inline-status" class="moemail-status-text"></span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- iCloud 账号列表 -->
-        <div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:260px;">
-          <div class="settings-group-title" style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid var(--border);flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <img src="assets/icloud.svg" alt="" style="width:18px;height:18px;">
-              <span data-i18n="accounts.icloudTitle">iCloud 邮箱</span>
-              <span style="font-size:12px;font-weight:600;color:var(--text-muted);padding:3px 8px;background:var(--bg-subtle);border-radius:6px;"><span data-i18n="accounts.count">共</span> <span id="icloud-count">0</span> <span data-i18n="accounts.countUnit">个</span></span>
-            </div>
-            <div style="display:flex;gap:8px;">
-              <button onclick="openAddICloudModal()" class="btn btn-dark btn-sm">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                <span data-i18n="accounts.addAccount">添加账号</span>
-              </button>
-              <button onclick="clearAllICloudAccounts()" class="btn btn-danger btn-sm" data-i18n="common.clearAll">清空全部</button>
-            </div>
-          </div>
-          <div style="flex:1;overflow-x:auto;min-height:0;">
-            <table style="width:100%;">
-              <thead><tr>
-                <th style="width:40px;padding:10px 16px;" data-i18n="accounts.thIndex">#</th>
-                <th style="padding:10px 8px;" data-i18n="accounts.thEmail">邮箱地址</th>
-                <th style="width:80px;padding:10px 8px;" data-i18n="accounts.thStatus">状态</th>
-                <th style="width:120px;padding:10px 8px;" data-i18n="accounts.thAddedAt">添加时间</th>
-                <th style="width:60px;padding:10px 16px;text-align:right;" data-i18n="accounts.thActions">操作</th>
-              </tr></thead>
-              <tbody id="parsed-icloud-body"></tbody>
-            </table>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -1156,8 +1392,441 @@
   </div>
 </div>
 
+<!-- 添加 Google 账号模态框 -->
+<div id="modal-add-google" class="modal-overlay">
+  <div class="modal-content" style="max-width:520px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img src="assets/google.svg" alt="" style="width:22px;height:22px;">
+        <h3 style="font-size:16px;font-weight:700;">添加 Google 账号 (独立 Profile)</h3>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeAddGoogleModal()" aria-label="关闭" title="关闭">&times;</button>
+    </div>
+    <!-- 导入文件 -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">导入文件</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button onclick="importGoogleFile()" class="btn btn-secondary" style="flex:1;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>选择 TXT / CSV 文件</span>
+        </button>
+        <span style="font-size:11px;color:var(--text-muted);">每行一个账号</span>
+      </div>
+    </div>
+    <!-- 分隔线 -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+      <span style="font-size:11px;color:var(--text-muted);font-weight:500;">或手动输入</span>
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+    </div>
+    <!-- 手动输入 -->
+    <div style="margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">手动输入</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">格式：邮箱----密码----辅助邮箱----2FA密钥----独立代理URL（每行一个，后三项可选）</div>
+      <textarea id="cfg-google-data" class="form-input" rows="6" placeholder="user@gmail.com----pass123----rec@gmail.com----JBSWY3DPEHPK3PXP----http://127.0.0.1:7890" style="resize:vertical;font-family:var(--font-mono);font-size:12px;"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeAddGoogleModal()" class="btn btn-secondary">取消</button>
+      <button onclick="addGoogleAccounts()" class="btn btn-dark">添加到列表</button>
+    </div>
+  </div>
+</div>
+
+<!-- Google 账号综合管理模态框 -->
+<div id="modal-google-account-manage" class="modal-overlay" style="display:none;">
+  <div class="modal-content" style="max-width:580px;max-height:90vh;overflow-y:auto;">
+    <!-- 模态框头部 -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:34px;height:34px;border-radius:10px;background:rgba(59,130,246,0.12);display:flex;align-items:center;justify-content:center;color:#2563eb;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </div>
+        <div>
+          <h3 style="font-size:16px;font-weight:700;margin:0;">Google 账号安全与管理</h3>
+          <div style="font-size:12px;font-family:var(--font-mono);color:var(--text-muted);margin-top:2px;" id="manage-modal-email">user@gmail.com</div>
+        </div>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeGoogleManageModal()" aria-label="关闭" title="关闭">&times;</button>
+    </div>
+
+    <!-- 子选项卡导航 -->
+    <div class="manage-subtabs">
+      <button type="button" class="manage-subtab-btn active" id="btn-subtab-2fa" onclick="switchManageSubTab('2fa')">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        两步验证 (2FA 管理)
+      </button>
+      <button type="button" class="manage-subtab-btn" id="btn-subtab-creds" onclick="switchManageSubTab('creds')">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        账号资料与代理
+      </button>
+      <button type="button" class="manage-subtab-btn" id="btn-subtab-env" onclick="switchManageSubTab('env')">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:4px;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        环境与直达
+      </button>
+      <button type="button" class="manage-subtab-btn" id="btn-subtab-kiro" onclick="switchManageSubTab('kiro')">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:4px;"><path d="M21 2l-2 2m-2-2l2 2"/><path d="M15.5 7.5L20 3m-4.5 4.5a6.5 6.5 0 1 1-9.19 9.19 6.5 6.5 0 0 1 9.19-9.19zM8.5 15.5l.01.01"/></svg>
+        Kiro 凭据 (JSON)
+      </button>
+    </div>
+
+    <!-- 选项卡 1: 2FA 管理 -->
+    <div id="manage-pane-2fa" class="manage-pane">
+      <!-- 卡片 1: 谷歌云端全自动重置 2FA -->
+      <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
+              谷歌安全中心全自动重置 2FA
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:3px;line-height:1.4;">
+              自动拉起专属 Chrome Profile 登录安全中心，重置并激活全新的 2FA 密钥，使旧密钥永久失效。
+            </div>
+          </div>
+          <button type="button" id="btn-auto-change-2fa" onclick="autoChangeCurrentGoogle2FA()" class="btn btn-dark btn-sm" style="background:#059669;color:#fff;border-color:#059669;font-weight:600;white-space:nowrap;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>全自动修改 2FA</span>
+          </button>
+        </div>
+        <!-- 实时执行终端 -->
+        <div id="manage-2fa-console" class="terminal-console-box" style="display:none;margin-top:10px;"></div>
+      </div>
+
+      <!-- 卡片 2: 本地 2FA 密钥维护与动态核验 -->
+      <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">本地 2FA 密钥维护与实时算码</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">支持手动修改当前账号绑定的 Base32 密钥，系统将实时计算当前动态码以供校验。</div>
+
+        <div style="margin-bottom:10px;">
+          <label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">2FA 密钥 (Base32 格式)</label>
+          <input type="text" id="manage-input-totp" class="form-input" style="font-family:var(--font-mono);font-size:12.5px;letter-spacing:1px;" placeholder="例如: JBSWY3DPEHPK3PXP..." oninput="onManageTOTPInput()">
+        </div>
+
+        <!-- 实时算码预览 -->
+        <div class="totp-preview-box">
+          <div>
+            <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">实时动态验证码 (RFC 6238)</div>
+            <div class="totp-code-display" id="manage-totp-live-code">------</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="totp-countdown-pill" id="manage-totp-countdown">剩余 30s</div>
+            <button type="button" onclick="copyCurrentManageTOTP()" class="btn btn-secondary btn-action-mini" style="margin-top:6px;">复制动态码</button>
+          </div>
+        </div>
+
+        <!-- 旧密钥备份提示 -->
+        <div id="manage-backup-key-row" style="margin-top:10px;font-size:11px;color:var(--text-muted);display:none;">
+          <span style="font-weight:600;">旧密钥备份:</span> <code id="manage-backup-key-val" style="background:var(--bg-card);padding:2px 6px;border-radius:4px;border:1px solid var(--border);font-family:var(--font-mono);"></code>
+          <span style="margin-left:6px;opacity:0.7;">(用于改绑前的原验证器紧急找回)</span>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+          <button type="button" onclick="saveGoogle2FAManual()" class="btn btn-dark btn-sm">保存 2FA 密钥</button>
+        </div>
+      </div>
+
+      <!-- 卡片 3: 人工辅助入口 -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px dashed var(--border);border-radius:10px;font-size:12px;">
+        <span style="color:var(--text-secondary);">遇到特殊风控需要手动在浏览器中设置？</span>
+        <button type="button" onclick="openCurrentGoogleSecurity()" class="btn btn-secondary btn-sm" style="font-size:11px;">直达谷歌两步验证页 ↗</button>
+      </div>
+    </div>
+
+    <!-- 选项卡 2: 账号资料与代理 -->
+    <div id="manage-pane-creds" class="manage-pane" style="display:none;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">Google 账号邮箱</label>
+        <input type="text" id="manage-input-email" class="form-input" disabled style="background:var(--bg-subtle);color:var(--text-muted);font-family:var(--font-mono);font-size:12px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">账号密码</label>
+        <input type="text" id="manage-input-password" class="form-input" style="font-family:var(--font-mono);font-size:12px;" placeholder="输入新密码">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">辅助邮箱 (Recovery Email)</label>
+        <input type="text" id="manage-input-recovery" class="form-input" style="font-family:var(--font-mono);font-size:12px;" placeholder="recovery@example.com">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">独立代理 (可选)</label>
+        <input type="text" id="manage-input-proxy" class="form-input" style="font-family:var(--font-mono);font-size:12px;" placeholder="http://127.0.0.1:7890 或 socks5://user:pass@host:port">
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" onclick="closeGoogleManageModal()" class="btn btn-secondary btn-sm">取消</button>
+        <button type="button" onclick="saveGoogleCredentialsManual()" class="btn btn-dark btn-sm">保存账号资料</button>
+      </div>
+    </div>
+
+    <!-- 选项卡 3: 环境与直达 -->
+    <div id="manage-pane-env" class="manage-pane" style="display:none;">
+      <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px;">独立 Profile 数据目录</div>
+        <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--text);word-break:break-all;" id="manage-env-profile-dir">-</div>
+      </div>
+      <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px;">当前会话状态</div>
+        <div style="font-size:12px;color:var(--text);" id="manage-env-status">-</div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" onclick="openCurrentGoogleProfile()" class="btn btn-secondary btn-sm">打开独立环境 ↗</button>
+        <button type="button" onclick="syncCurrentGoogleStatus()" class="btn btn-dark btn-sm">检测并同步状态</button>
+      </div>
+    </div>
+
+    <!-- 选项卡 4: Kiro 凭据 (JSON 生成、复制、导出) -->
+    <div id="manage-pane-kiro" class="manage-pane" style="display:none;">
+      <!-- 卡片 1: 凭据就绪状态与元数据 -->
+      <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;">
+            <span id="manage-kiro-status-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#94a3b8;"></span>
+            <span>Kiro 会话凭据状态:</span>
+            <span id="manage-kiro-status-badge" style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--bg-card);color:var(--text-muted);border:1px solid var(--border);">未提取</span>
+          </div>
+          <button type="button" id="btn-extract-kiro-creds" onclick="extractCurrentGoogleKiroCreds()" class="btn btn-dark btn-sm" style="background:#4f46e5;color:#fff;border-color:#4f46e5;font-size:11.5px;padding:4px 10px;font-weight:600;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span>提取/刷新凭据</span>
+          </button>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;">
+          <div style="background:var(--bg-card);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
+            <span style="color:var(--text-muted);">UserId:</span>
+            <span id="manage-kiro-meta-uid" style="font-family:var(--font-mono);font-weight:600;color:var(--text);margin-left:4px;">-</span>
+          </div>
+          <div style="background:var(--bg-card);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
+            <span style="color:var(--text-muted);">有效期限:</span>
+            <span id="manage-kiro-meta-expiry" style="font-family:var(--font-mono);font-weight:600;color:var(--text);margin-left:4px;">-</span>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);padding:6px 10px;border-radius:6px;border:1px solid var(--border);margin-top:6px;font-size:11px;">
+          <span style="color:var(--text-muted);">ProfileArn:</span>
+          <span id="manage-kiro-meta-arn" style="font-family:var(--font-mono);color:var(--text);margin-left:4px;word-break:break-all;">-</span>
+        </div>
+        <!-- 提取动态终端 -->
+        <div id="manage-kiro-console" class="terminal-console-box" style="display:none;margin-top:10px;"></div>
+      </div>
+
+      <!-- 卡片 2: 格式选择与 JSON 预览 -->
+      <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text);">凭据 JSON 导出格式</div>
+          <div style="display:flex;gap:12px;font-size:11px;">
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+              <input type="radio" name="kiro-json-format" value="kam" checked onchange="onChangeKiroFormat()">
+              <span style="font-weight:600;">KAM 格式 (accounts.json)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+              <input type="radio" name="kiro-json-format" value="ide" onchange="onChangeKiroFormat()">
+              <span style="font-weight:600;">Kiro IDE 官方格式</span>
+            </label>
+          </div>
+        </div>
+
+        <textarea id="manage-kiro-json-preview" readonly class="form-input" style="width:100%;height:150px;font-family:var(--font-mono);font-size:11px;line-height:1.45;background:var(--bg-card);color:var(--text);white-space:pre;overflow-x:auto;resize:vertical;" placeholder="// 尚未提取凭据或凭据未就绪，请点击上方‘提取/刷新凭据’"></textarea>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+          <span style="font-size:11px;color:var(--text-muted);">支持直接复制或另存为 .json 文件导入使用</span>
+          <div style="display:flex;gap:8px;">
+            <button type="button" onclick="copyCurrentKiroJSON()" class="btn btn-secondary btn-sm" style="font-size:11px;">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>复制凭据 JSON</span>
+            </button>
+            <button type="button" onclick="downloadCurrentKiroJSON()" class="btn btn-dark btn-sm" style="font-size:11px;background:#059669;border-color:#059669;">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>下载凭据文件</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 批量修改 2FA 模态框 -->
+<div id="modal-batch-google-2fa" class="modal-overlay" style="display:none;">
+  <div class="modal-content" style="max-width:540px;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:34px;height:34px;border-radius:10px;background:rgba(5,150,105,0.12);display:flex;align-items:center;justify-content:center;color:#059669;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div>
+          <h3 style="font-size:16px;font-weight:700;margin:0;">批量修改 Google 2FA</h3>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">在谷歌安全中心自动重置并激活全新的 2FA 密钥</div>
+        </div>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeBatchChangeGoogle2FAModal()" aria-label="关闭" title="关闭">&times;</button>
+    </div>
+
+    <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+      <div style="font-size:12px;color:var(--text);">
+        选中的账号数量: <strong id="batch-2fa-count" style="color:#059669;font-size:14px;">0</strong> 个
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+        系统将依次排队调起独立 Chrome Profile，全自动完成密码核验、新验证器创建、新密钥提取与激活动态码提交。
+      </div>
+    </div>
+
+    <!-- 进度终端 -->
+    <div id="batch-2fa-console" class="terminal-console-box" style="margin-bottom:14px;height:140px;display:none;"></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <button type="button" id="btn-export-batch-2fa" onclick="exportUpdatedGoogleAccounts()" class="btn btn-secondary btn-sm" style="display:none;">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>导出最新账号列表</span>
+      </button>
+      <div style="display:flex;gap:8px;margin-left:auto;">
+        <button type="button" onclick="closeBatchChangeGoogle2FAModal()" class="btn btn-secondary btn-sm">关闭</button>
+        <button type="button" id="btn-start-batch-2fa" onclick="runBatchChangeGoogle2FA()" class="btn btn-dark btn-sm" style="background:#059669;border-color:#059669;color:#fff;">开始批量修改 2FA</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stripe 仿真自动填卡模态框 -->
+<div id="modal-stripe-autofill" class="modal-overlay" style="display:none;">
+  <div class="modal-content" style="max-width:600px;max-height:92vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:34px;height:34px;border-radius:10px;background:rgba(99,102,241,0.12);display:flex;align-items:center;justify-content:center;color:#6366f1;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
+        <div>
+          <h3 style="font-size:16px;font-weight:700;margin:0;">Stripe 订阅付款与仿真填卡</h3>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">唤起浏览器在 Stripe 结账页仿真模拟真实击键填入卡片与账单信息</div>
+        </div>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeAutofillStripeModal()" aria-label="关闭" title="关闭">&times;</button>
+    </div>
+
+    <!-- 提示框 -->
+    <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;line-height:1.5;color:var(--text);">
+      💡 <b>24小时免登录长效链接</b>：Kiro Stripe Checkout 链接具备 <b>24 小时超长有效存活期</b>，打开即预置该账号订阅会话，无需再次登录 Google 或 Kiro。
+    </div>
+
+    <!-- 付款链接 -->
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <label for="autofill-payment-url" style="font-size:12px;font-weight:600;color:var(--text-secondary);">Stripe 付款链接 (URL)</label>
+        <a href="javascript:void(0)" id="autofill-open-browser-btn" onclick="openCurrentPaymentUrl()" style="font-size:11px;color:#6366f1;text-decoration:none;display:none;">在默认浏览器中打开 ↗</a>
+      </div>
+      <input type="text" id="autofill-payment-url" class="form-input" placeholder="https://checkout.stripe.com/c/pay/cs_live_..." style="font-family:var(--font-mono);font-size:12px;">
+    </div>
+
+    <!-- 卡片与账单信息容器 -->
+    <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);">信用卡与账单地址</div>
+        <button type="button" onclick="fillTestCardData()" class="btn btn-secondary btn-sm" style="font-size:11px;padding:2px 8px;background:var(--bg-card);" title="一键填入测试数据，验证表单按键输入流程">
+          ⚡ 填充示例测试卡
+        </button>
+      </div>
+
+      <!-- 仿真实体信用卡动态预览卡片 -->
+      <div class="stripe-credit-card-preview">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="stripe-chip"></div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span id="stripe-card-brand-label" style="font-size:12px;font-weight:700;letter-spacing:1px;opacity:0.9;">CARD PREVIEW</span>
+            <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.15);font-weight:600;">SECURE</span>
+          </div>
+        </div>
+        <div class="stripe-preview-number" id="stripe-card-preview-number">•••• •••• •••• ••••</div>
+        <div class="stripe-preview-footer">
+          <div>
+            <div style="font-size:9px;opacity:0.7;margin-bottom:2px;">CARDHOLDER</div>
+            <div id="stripe-card-preview-name" style="font-weight:600;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">JOHN DOE</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:9px;opacity:0.7;margin-bottom:2px;">EXPIRES</div>
+            <div id="stripe-card-preview-expiry" style="font-weight:600;font-family:var(--font-mono);">12/28</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 卡号 / 到期日 / CVC -->
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">卡号 (Card Number)</label>
+          <input type="text" id="autofill-card-number" class="form-input" placeholder="4242 4242 4242 4242" style="font-family:var(--font-mono);font-size:12px;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">到期 (MM/YY)</label>
+          <input type="text" id="autofill-card-expiry" class="form-input" placeholder="12/28" style="font-family:var(--font-mono);font-size:12px;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">CVC</label>
+          <input type="text" id="autofill-card-cvc" class="form-input" placeholder="123" style="font-family:var(--font-mono);font-size:12px;">
+        </div>
+      </div>
+
+      <!-- 持卡人姓名 -->
+      <div style="margin-bottom:10px;">
+        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">持卡人全名 (Name on Card)</label>
+        <input type="text" id="autofill-billing-name" class="form-input" placeholder="John Doe" style="font-size:12px;">
+      </div>
+
+      <!-- 国家 / 邮编 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">国家 / 地区 (Country)</label>
+          <input type="text" id="autofill-billing-country" class="form-input" placeholder="US" value="US" style="font-size:12px;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">邮政编码 (Postal Code)</label>
+          <input type="text" id="autofill-billing-postal" class="form-input" placeholder="90001" style="font-family:var(--font-mono);font-size:12px;">
+        </div>
+      </div>
+
+      <!-- 街道地址 -->
+      <div style="margin-bottom:10px;">
+        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">街道详细地址 (Address Line 1)</label>
+        <input type="text" id="autofill-billing-address" class="form-input" placeholder="123 Main Street" style="font-size:12px;">
+      </div>
+
+      <!-- 城市 / 州 (省) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div>
+          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">城市 (City)</label>
+          <input type="text" id="autofill-billing-city" class="form-input" placeholder="Los Angeles" style="font-size:12px;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">州 / 省份 (State / Province)</label>
+          <input type="text" id="autofill-billing-state" class="form-input" placeholder="CA" style="font-size:12px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- 安全扣款开关 -->
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:10px;margin-bottom:14px;">
+      <input type="checkbox" id="autofill-auto-submit" style="margin-top:3px;cursor:pointer;">
+      <label for="autofill-auto-submit" style="font-size:12px;color:var(--text);cursor:pointer;line-height:1.5;">
+        <b>自动点击“订阅”提交按钮完成扣款</b>
+        <span style="display:block;font-size:11px;color:var(--text-muted);">默认保持未勾选。未勾选时仅自动仿真打字填表并停留在页面，由人工核对无误后再手动点击“订阅”。</span>
+      </label>
+    </div>
+
+    <!-- 填卡动态实时进度提示框 -->
+    <div id="autofill-progress-box" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span id="autofill-progress-spinner" class="spinner" style="width:14px;height:14px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin 0.8s linear infinite;"></span>
+        <span id="autofill-progress-text" style="font-size:12px;color:var(--text);font-weight:500;">准备中...</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button type="button" onclick="closeAutofillStripeModal()" class="btn btn-secondary">取消</button>
+      <button type="button" id="btn-start-stripe-autofill" onclick="submitAutofillStripe()" class="btn btn-dark" style="background:#4f46e5;border-color:#4f46e5;color:#fff;">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>开始仿真填卡</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <script src="js/i18n.js"></script>
 <script src="js/accounts.js"></script>
+<script src="js/google.js"></script>
 <script src="js/moemail.js"></script>
 <script src="js/cloudmail.js"></script>
 <script src="js/mailnest.js"></script>
